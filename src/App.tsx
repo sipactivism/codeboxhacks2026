@@ -1,6 +1,8 @@
+import CreatePage from "./components/createpage";
+
 function App() {
   return (
-    <h1>hi</h1>
+    CreatePage()
   );
 }
 
