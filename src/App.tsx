@@ -6,7 +6,7 @@ import type {
   ClubFilters,
 } from "./types/clubs";
 import ClubListingsPage from "./components/clubview/ClubListingsPage";
-import CreatePage from "./components/createpage";
+import CreatePage from "./components/createpage/createpage";
 
 function App() {
 
