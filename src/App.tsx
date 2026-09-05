@@ -1,5 +1,4 @@
 import { useContext } from "react";
-import CreatePage from "./components/createpage/createpage";
 import { HomePage } from "./components/home/HomePage";
 import { PageContext, PageProvider } from "./PageContext";
 import type {
@@ -7,6 +6,7 @@ import type {
   ClubFilters,
 } from "./types/clubs";
 import ClubListingsPage from "./components/clubview/ClubListingsPage";
+import CreatePage from "./components/createpage";
 
 function App() {
 
