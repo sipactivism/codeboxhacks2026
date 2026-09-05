@@ -39,12 +39,5 @@ function PageContainer() {
       return <ClubListingsPage />;
     case 4:
       return <ClubDetail onBack={() => setPageNum(1)} />;
-    default:
-      return (
-        <HomePage
-          onOpenCategory={openCategory}
-          onCreateClub={() => setPageNum(2)}
-        />
-      );
   }
 }
