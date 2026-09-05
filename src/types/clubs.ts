@@ -3,7 +3,7 @@ export type CategoryId =
   | "major-specific"
   | "arts"
   | "culture"
-  | "niche"
+  | "fun"
   | "random";
 
 export type BrowseCategory = CategoryId | "top-rated";

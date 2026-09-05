@@ -22,8 +22,8 @@ export const categories: Category[] = [
     description: "Identity, language, and community",
   },
   {
-    id: "niche",
-    name: "Niche",
+    id: "fun",
+    name: "Fun",
     description: "Special interests and unique hobbies",
   },
   {
