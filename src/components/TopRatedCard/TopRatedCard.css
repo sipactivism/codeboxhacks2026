@@ -21,15 +21,10 @@
   box-shadow: var(--shadow);
 }
 
-.top-rated-card__icon {
-  color: var(--cal-poly-gold);
-  font-size: 32px;
-}
-
 .top-rated-card strong,
 .top-rated-card small {
   display: block;
-  text-align: left;
+  text-align: center;
 }
 
 .top-rated-card strong {

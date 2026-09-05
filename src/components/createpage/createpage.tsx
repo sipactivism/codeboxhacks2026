@@ -143,6 +143,10 @@ function CreatePage() {
         .from(CLUB_IMAGES_BUCKET)
         .getPublicUrl(filePath);
       imageUrl = data.publicUrl;
+
+      //TODO SEND THE USER TO THE CLUB PAGE FOR THAT CLUB
+      //TODO SEND THE USER TO THE CLUB PAGE FOR THAT CLUB
+      //TODO SEND THE USER TO THE CLUB PAGE FOR THAT CLUB
     }
 
     const { error: insertError } = await supabase
@@ -259,9 +263,9 @@ function CreatePage() {
               value={description}
               onChange={(event) => setDescription(event.target.value)}
               placeholder="What is your club all about? Keep it welcoming, clear, and specific."
-              maxLength={240}
+              maxLength={2000}
             />
-            <span className="count">{description.length} / 240</span>
+            <span className="count">{description.length} / 2000</span>
           </div>
           <div className="field">
             <label>
@@ -281,11 +285,24 @@ function CreatePage() {
                 </button>
               ))}
               <input
+                key="tag-input"
                 value={tagText}
                 onChange={(event) => setTagText(event.target.value)}
-                onKeyDown={(event) =>
-                  event.key === "Enter" && (event.preventDefault(), addTag())
-                }
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") {
+                    event.preventDefault();
+                    addTag();
+                  }
+
+                  if (
+                    event.key === "Backspace" &&
+                    tagText === "" &&
+                    tags.length > 0
+                  ) {
+                    event.preventDefault();
+                    setTags((currentTags) => currentTags.slice(0, -1));
+                  }
+                }}
                 placeholder="Add a tag"
               />
               <button className="add" onClick={addTag}>

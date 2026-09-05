@@ -3,7 +3,7 @@ export type CategoryId =
   | "major-specific"
   | "arts"
   | "culture"
-  | "niche"
+  | "fun"
   | "random";
 
 export type BrowseCategory = CategoryId | "top-rated";
@@ -17,6 +17,5 @@ export type ClubFilters = {
 export type Category = {
   id: CategoryId;
   name: string;
-  icon: string;
   description: string;
 };

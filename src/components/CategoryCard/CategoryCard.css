@@ -1,4 +1,6 @@
 .category-card {
+  position: relative;
+  isolation: isolate;
   display: flex;
   min-height: 175px;
   flex-direction: column;
@@ -9,11 +11,75 @@
   border: 1px solid var(--border);
   border-radius: 26px;
   background: var(--surface);
-  color: var(--text);
+  color: #ffffff;
   transition:
     transform 180ms ease,
     border-color 180ms ease,
     box-shadow 180ms ease;
+}
+
+.category-card > * {
+  position: relative;
+  z-index: 1;
+}
+
+.category-card--sports::before,
+.category-card--major-specific::before,
+.category-card--arts::before,
+.category-card--culture::before,
+.category-card--niche::before,
+.category-card--random::before {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  border-radius: inherit;
+  background-repeat: no-repeat;
+  background-size: cover;
+  content: "";
+}
+
+.category-card--sports::before {
+  background-image:
+    linear-gradient(rgba(14, 29, 21, 0.58), rgba(14, 29, 21, 0.58)),
+    url("/images/cal-poly-mens-volleyball.jpg");
+  background-position: center 28%;
+}
+
+.category-card--major-specific::before {
+  background-image:
+    linear-gradient(rgba(14, 29, 21, 0.58), rgba(14, 29, 21, 0.58)),
+    url("/images/codebox-club.webp");
+  background-position: center;
+}
+
+.category-card--arts::before {
+  background-image:
+    linear-gradient(rgba(14, 29, 21, 0.58), rgba(14, 29, 21, 0.58)),
+    url("/images/cal-poly-arts.jpg");
+  background-position: center 43%;
+}
+
+.category-card--culture::before {
+  background-image:
+    linear-gradient(rgba(14, 29, 21, 0.58), rgba(14, 29, 21, 0.58)),
+    url("/images/culture-blue-hoodies.png");
+  background-position: center 42%;
+}
+
+.category-card--niche::before {
+  background-image:
+    linear-gradient(rgba(14, 29, 21, 0.58), rgba(14, 29, 21, 0.58)),
+    url("/images/niche-friends.png");
+  background-position: center 34%;
+}
+
+.category-card--random::before {
+  background-image:
+    linear-gradient(rgba(14, 29, 21, 0.52), rgba(14, 29, 21, 0.52)),
+    url("/images/random-dice.png");
+  background-color: #9fcbd2;
+  background-position: center 49%;
+  background-size: 115% auto;
 }
 
 .category-card:hover {
@@ -22,19 +88,16 @@
   box-shadow: var(--shadow);
 }
 
-.category-card__icon {
-  color: var(--cal-poly-green);
-  font-size: 27px;
-}
-
 .category-card strong {
   font-size: 19px;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
 }
 
 .category-card__description {
-  color: var(--text-muted);
+  color: rgba(255, 255, 255, 0.92);
   font-size: 12px;
   text-align: center;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
 }
 
 @media (max-width: 560px) {
