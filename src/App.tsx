@@ -1,17 +1,25 @@
-import { StrictMode } from "react";
-import { createRoot } from "react-dom/client";
+import { HomePage } from "./components/home/HomePage";
+import type {
+  BrowseCategory,
+  ClubFilters,
+} from "./types/clubs";
 
-import App from "./App";
-import "./styles/global.css";
+function App() {
+  function openCategory(
+    category: BrowseCategory,
+    filters: ClubFilters,
+  ) {
+    console.log(category, filters);
+  }
 
-const rootElement = document.getElementById("root");
-
-if (!rootElement) {
-  throw new Error('Missing element with id="root".');
+  return (
+    <HomePage
+      onOpenCategory={openCategory}
+      onCreateClub={() => {
+        console.log("Open create-club page");
+      }}
+    />
+  );
 }
 
-createRoot(rootElement).render(
-  <StrictMode>
-    <App />
-  </StrictMode>,
-);
+export default App;
