@@ -1,23 +1,19 @@
 :root {
-  color-scheme: light dark;
+  color-scheme: light;
 
-  --background: light-dark(#f5f6f2, #101713);
-  --surface: light-dark(#ffffff, #18221c);
-  --text: light-dark(#16221b, #edf5ef);
-  --text-muted: light-dark(#637067, #a9b8ae);
-  --border: light-dark(#d9e1da, #314239);
+  --background: #f5f6f2;
+  --surface: #ffffff;
+  --text: #16221b;
+  --text-muted: #637067;
+  --border: #d9e1da;
 
-  --cal-poly-green: light-dark(#154734, #8bc9aa);
-  --green-foreground: light-dark(#ffffff, #102319);
+  --cal-poly-green: #154734;
+  --green-foreground: #ffffff;
 
-  --cal-poly-gold: light-dark(#c69214, #edc75e);
-  --gold-surface: light-dark(#fff5d6, #3b331d);
+  --cal-poly-gold: #c69214;
+  --gold-surface: #fff5d6;
 
-  --shadow: 0 12px 28px
-    light-dark(
-      rgba(20, 71, 52, 0.1),
-      rgba(0, 0, 0, 0.25)
-    );
+  --shadow: 0 12px 28px rgba(20, 71, 52, 0.1);
 }
 
 * {

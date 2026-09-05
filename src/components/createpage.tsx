@@ -124,7 +124,7 @@ function CreatePage() {
 
     if (imageFile) {
       const extension = imageFile.name.split(".").pop()?.toLowerCase() || "jpg";
-      const filePath = `clubs/${crypto.randomUUID()}.${extension}`;
+      const filePath = `images/${crypto.randomUUID()}.${extension}`;
       const { error: uploadError } = await supabase.storage
         .from(CLUB_IMAGES_BUCKET)
         .upload(filePath, imageFile, {
