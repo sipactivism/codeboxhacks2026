@@ -39,7 +39,7 @@ export function HomePage({
             Club<span>Rate</span>
           </h1>
 
-          <p>Find your people at Cal Poly.</p>
+          <p>A brand new way to view and rate clubs.</p>
         </header>
 
         <SearchFilter
