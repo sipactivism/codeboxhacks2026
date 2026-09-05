@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useContext, useRef, useState } from "react";
 import {
   ArrowLeft,
   AtSign,
@@ -13,6 +13,7 @@ import {
   X,
 } from "lucide-react";
 import "/src/styles/createpagestyle.css";
+import { PageContext } from "../PageContext";
 import { supabase } from "../utils/supabase";
 
 const majorGroups = {
@@ -80,6 +81,7 @@ const spectrum = [
 const CLUB_IMAGES_BUCKET = "club_icons";
 
 function CreatePage() {
+  const pageContext = useContext(PageContext);
   const inputRef = useRef<HTMLInputElement>(null);
   const [image, setImage] = useState<string | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -191,7 +193,7 @@ function CreatePage() {
         </div>
       </nav>
       <section className="page-head">
-        <button className="back">
+        <button className="back" onClick={() => pageContext.setPageNum(1)}>
           <ArrowLeft size={18} /> Back to dashboard
         </button>
         <div>
