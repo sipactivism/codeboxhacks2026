@@ -153,17 +153,12 @@ function CreatePage() {
         description: clubDescription,
         approved: false,
         image: imageUrl,
-        comments: [],
         club_statistics: {
           commitment_level: spectrum[commitment][0],
           majors: majors,
         },
-        user_statistics: {
-          commitment_level: null,
-          majors: [],
-        },
         club_info_last_updated: new Date().toISOString(),
-        meeting_room_locations: [],
+        meeting_info: [],
         tags,
         contact_links: Object.entries(contactLinks)
           .filter(([, value]) => value.trim())
