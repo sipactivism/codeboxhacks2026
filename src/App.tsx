@@ -1,4 +1,4 @@
-import { useContext } from "react";
+import { useContext, useState } from "react";
 
 import { ClubDetail } from "./components/ClubDetail/ClubDetail";
 import ClubListingsPage from "./components/clubview/ClubListingsPage";
@@ -19,9 +19,14 @@ export default App;
 
 function PageContainer() {
   const { pageNum, setPageNum } = useContext(PageContext);
+  const [filters, setFilters] = useState<ClubFilters>({
+    query: "",
+    commitment: "all",
+    minimumRating: 0,
+  });
 
-  function openCategory(category: BrowseCategory, filters: ClubFilters) {
-    console.log(category, filters);
+  function openCategory(_category: BrowseCategory, filters: ClubFilters) {
+    setFilters(filters);
     setPageNum(3);
   }
 
@@ -29,6 +34,8 @@ function PageContainer() {
     case 1:
       return (
         <HomePage
+          filters={filters}
+          onFiltersChange={setFilters}
           onOpenCategory={openCategory}
           onCreateClub={() => setPageNum(2)}
         />
@@ -36,7 +43,7 @@ function PageContainer() {
     case 2:
       return <CreatePage />;
     case 3:
-      return <ClubListingsPage />;
+      return <ClubListingsPage filters={filters} onFiltersChange={setFilters} />;
     case 4:
       return <ClubDetail onBack={() => setPageNum(1)} />;
   }

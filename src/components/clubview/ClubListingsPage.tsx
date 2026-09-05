@@ -2,6 +2,7 @@ import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import type { KeyboardEvent } from "react";
 import "./Club-Listings.css";
 import { PageContext } from "../../PageContext";
+import type { ClubFilters } from "../../types/clubs";
 
 export type CommitmentLevel = "none" | "low" | "moderate" | "high" | "serious";
 
@@ -26,6 +27,8 @@ export interface Club {
 
 interface ClubListingsPageProps {
   clubs?: Club[];
+  filters: ClubFilters;
+  onFiltersChange: (filters: ClubFilters) => void;
   /** Use this with React Router: onClubClick={(club) => navigate(`/clubs/${club.slug}`)} */
   onClubClick?: (club: Club) => void;
 }
@@ -270,9 +273,10 @@ function ClubCard({ club, onSelect }: { club: Club; onSelect: (club: Club) => vo
 
 export default function ClubListingsPage({
   clubs = SAMPLE_CLUBS,
+  filters,
+  onFiltersChange,
   onClubClick = goToClubPage,
 }: ClubListingsPageProps) {
-  const [query, setQuery] = useState("");
   const [sortMode, setSortMode] = useState<SortMode>("rating-desc");
   const [sortOpen, setSortOpen] = useState(false);
   const sortRef = useRef<HTMLDivElement>(null);
@@ -286,7 +290,7 @@ export default function ClubListingsPage({
   }, []);
 
   const visibleClubs = useMemo(() => {
-    const normalizedQuery = query.trim().toLowerCase();
+    const normalizedQuery = filters.query.trim().toLowerCase();
     const filtered = normalizedQuery
       ? clubs.filter((club) =>
           [club.name, club.category, club.description, COMMITMENT[club.commitment].label, ...club.tags]
@@ -302,7 +306,7 @@ export default function ClubListingsPage({
       if (sortMode === "commitment-desc") return COMMITMENT[b.commitment].rank - COMMITMENT[a.commitment].rank;
       return COMMITMENT[a.commitment].rank - COMMITMENT[b.commitment].rank;
     });
-  }, [clubs, query, sortMode]);
+  }, [clubs, filters.query, sortMode]);
 
   const selectedSortLabel = SORT_OPTIONS.find((option) => option.value === sortMode)?.label;
 
@@ -315,7 +319,7 @@ export default function ClubListingsPage({
       <div className="clubs-title-row">
         <h1>Popular across Cal Poly</h1>
         <p className="clubs-count" aria-live="polite">
-          {visibleClubs.length} {visibleClubs.length === 1 ? "club" : "clubs"}{query ? " found" : ""}
+          {visibleClubs.length} {visibleClubs.length === 1 ? "club" : "clubs"}{filters.query ? " found" : ""}
         </p>
       </div>
 
@@ -323,9 +327,12 @@ export default function ClubListingsPage({
         <label className="clubs-search">
           <span className="sr-only">Search clubs</span>
           <input
+            id="club-search2"
             type="search"
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
+            value={filters.query}
+            onChange={(event) =>
+              onFiltersChange({ ...filters, query: event.target.value })
+            }
             placeholder="Search by club, interest, or keyword…"
           />
         </label>
