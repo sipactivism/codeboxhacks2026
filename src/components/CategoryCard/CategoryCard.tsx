@@ -16,17 +16,10 @@ export function CategoryCard({
 }: CategoryCardProps) {
   return (
     <button
-      className="category-card"
+      className={`category-card category-card--${category.id}`}
       type="button"
       onClick={() => onOpen(category.id)}
     >
-      <span
-        className="category-card__icon"
-        aria-hidden="true"
-      >
-        {category.icon}
-      </span>
-
       <strong>{category.name}</strong>
 
       <span className="category-card__description">

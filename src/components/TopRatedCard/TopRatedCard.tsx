@@ -13,13 +13,6 @@ export function TopRatedCard({
       type="button"
       onClick={onOpen}
     >
-      <span
-        className="top-rated-card__icon"
-        aria-hidden="true"
-      >
-        ♛
-      </span>
-
       <span>
         <strong>Top Rated</strong>
 

@@ -17,6 +17,5 @@ export type ClubFilters = {
 export type Category = {
   id: CategoryId;
   name: string;
-  icon: string;
   description: string;
 };
