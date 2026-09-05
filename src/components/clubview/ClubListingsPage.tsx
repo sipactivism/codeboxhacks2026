@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import type { KeyboardEvent } from "react";
 import "./Club-Listings.css";
+import { PageContext } from "../../PageContext";
 
 export type CommitmentLevel = "none" | "low" | "moderate" | "high" | "serious";
 
@@ -305,9 +306,12 @@ export default function ClubListingsPage({
 
   const selectedSortLabel = SORT_OPTIONS.find((option) => option.value === sortMode)?.label;
 
+  const pageContext = useContext(PageContext);
+
+
   return (
     <main className="clubs-page">
-      <p className="clubs-eyebrow">Featured clubs</p>
+      <div className="clubs-eyebrow hover-mouse" onClick={() => {pageContext.setPageNum(1)}}>Back home</div>
       <div className="clubs-title-row">
         <h1>Popular across Cal Poly</h1>
         <p className="clubs-count" aria-live="polite">
@@ -318,9 +322,6 @@ export default function ClubListingsPage({
       <div className="clubs-toolbar">
         <label className="clubs-search">
           <span className="sr-only">Search clubs</span>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-            <circle cx="11" cy="11" r="7" /><path d="m20 20-4-4" />
-          </svg>
           <input
             type="search"
             value={query}

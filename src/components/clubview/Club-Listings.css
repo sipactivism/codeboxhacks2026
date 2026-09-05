@@ -172,6 +172,10 @@
   transition: border-color .2s, box-shadow .2s, transform .2s;
 }
 
+.hover-mouse:hover {
+  cursor: pointer;
+}
+
 .club-card:hover {
   border-color: #abc0af;
   box-shadow: 0 14px 36px rgba(20, 77, 57, .10);
