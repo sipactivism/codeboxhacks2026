@@ -1,6 +1,7 @@
-import { useRef, useState } from 'react'
+import { useContext, useRef, useState } from 'react'
 import { ArrowLeft, AtSign, Camera, Check, ChevronDown, CircleHelp, Globe2, Plus, ShieldCheck, Users, X } from 'lucide-react'
 import '/src/styles/createpagestyle.css'
+import { PageContext } from '../PageContext'
 
 const majorGroups = {
   Engineering: ['Aerospace Engineering', 'Architectural Engineering', 'Biomedical Engineering', 'Civil Engineering', 'Computer Engineering', 'Computer Science', 'Electrical Engineering', 'Environmental Engineering', 'General Engineering', 'Industrial Engineering', 'Manufacturing Engineering', 'Materials Engineering', 'Mechanical Engineering', 'Software Engineering'],
@@ -31,16 +32,16 @@ function CreatePage() {
     if (value && !tags.includes(value)) setTags([...tags, value])
     setTagText('')
   }
+  
+  const pageContext = useContext(PageContext);
 
   return (
     <main>
-      <nav>
-        <a className="brand"><span>Club</span>Rate</a>
-        <div className="navlinks"><a>Discover clubs</a><a>My dashboard</a><button className="avatar">AR</button></div>
-      </nav>
       <section className="page-head">
-        <button className="back"><ArrowLeft size={18} /> Back to dashboard</button>
-        <div><p className="eyebrow">CLUB EDITOR</p><h1>Upload your club</h1><p className="subtitle">Create a page for your club for others to see and join.</p></div>
+        <button className="back" onClick={() => {
+          pageContext.setPageNum(1);
+        }}><ArrowLeft size={18} /> Return to home</button>
+        <div><p className="eyebrow"></p><h1>Add your club</h1><p className="subtitle">Add your club to ClubRate for others to see and rate your club.</p></div>
       </section>
       <section className="layout">
         <div className="form-card">

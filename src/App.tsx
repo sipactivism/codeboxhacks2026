@@ -28,7 +28,6 @@ function PageContainer()
   }
 
   const {pageNum, setPageNum} = useContext(PageContext);
-  console.log(pageNum);
   switch(pageNum){
     case 1: return (
     <HomePage
