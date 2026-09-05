@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title">
+  <title id="title">ClubRate icon</title>
+  <rect width="64" height="64" rx="16" fill="#0f4a36"/>
+  <path d="M16 31.5 32 18l16 13.5v16A4.5 4.5 0 0 1 43.5 52h-27A4.5 4.5 0 0 1 12 47.5v-16Z" fill="#fffaf0"/>
+  <path d="M9.5 31.5 32 12l22.5 19.5" fill="none" stroke="#d99b13" stroke-linecap="round" stroke-linejoin="round" stroke-width="5"/>
+  <path d="m32 27.5 2.35 5.02 5.4.7-3.95 3.7.98 5.33L32 39.65l-4.78 2.6.98-5.33-3.95-3.7 5.4-.7L32 27.5Z" fill="#d99b13"/>
+  <path d="M22 47h20" stroke="#0f4a36" stroke-linecap="round" stroke-width="3"/>
+</svg>
