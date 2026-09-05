@@ -1,7 +1,8 @@
-import { useContext } from "react";
+import { useContext, useState } from "react";
 
 import { ClubDetail } from "./components/ClubDetail/ClubDetail";
 import ClubListingsPage from "./components/clubview/ClubListingsPage";
+import type { Club } from "./components/clubview/ClubListingsPage";
 import CreatePage from "./components/createpage/createpage";
 import { HomePage } from "./components/home/HomePage";
 import { PageContext, PageProvider } from "./PageContext";
@@ -19,6 +20,7 @@ export default App;
 
 function PageContainer() {
   const { pageNum, setPageNum } = useContext(PageContext);
+  const [selectedClub, setSelectedClub] = useState<Club | null>(null);
 
   function openCategory(category: BrowseCategory, filters: ClubFilters) {
     console.log(category, filters);
@@ -36,9 +38,16 @@ function PageContainer() {
     case 2:
       return <CreatePage />;
     case 3:
-      return <ClubListingsPage />;
+      return (
+        <ClubListingsPage
+          onClubClick={(club) => {
+            setSelectedClub(club);
+            setPageNum(4);
+          }}
+        />
+      );
     case 4:
-      return <ClubDetail onBack={() => setPageNum(1)} />;
+      return <ClubDetail club={selectedClub ?? undefined} onBack={() => setPageNum(3)} />;
     default:
       return (
         <HomePage

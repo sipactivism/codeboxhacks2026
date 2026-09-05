@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { KeyboardEvent } from "react";
+import { supabase } from "../../utils/supabase";
 import "./Club-Listings.css";
 
 export type CommitmentLevel = "none" | "low" | "moderate" | "high" | "serious";
 
 /**
- * Keep your database/API response in this shape. Once fetched, pass the array
- * to <ClubListingsPage clubs={clubsFromDatabase} /> and every record becomes a card.
+ * Client-side representation of one row returned from public.clubs.
  */
 export interface Club {
   id: string;
@@ -14,18 +14,20 @@ export interface Club {
   name: string;
   category: string;
   description: string;
-  rating: number;
-  reviewCount: number;
+  rating?: number;
+  reviewCount?: number;
   commitment: CommitmentLevel;
   tags: string[];
   logoUrl?: string;
   logoAlt?: string;
   initials?: string;
+  contactLinks?: Array<{
+    platform: "instagram" | "discord" | "groupme" | "website";
+    url: string;
+  }>;
 }
 
 interface ClubListingsPageProps {
-  clubs?: Club[];
-  /** Use this with React Router: onClubClick={(club) => navigate(`/clubs/${club.slug}`)} */
   onClubClick?: (club: Club) => void;
 }
 
@@ -53,157 +55,56 @@ const SORT_OPTIONS: { value: SortMode; label: string }[] = [
   { value: "commitment-asc", label: "Lowest commitment" },
 ];
 
-// Example data only. Replace this with your database result via the `clubs` prop.
-export const SAMPLE_CLUBS: Club[] = [
-  {
-    id: "cal-poly-racing",
-    slug: "cal-poly-racing",
-    name: "Cal Poly Racing",
-    initials: "CPR",
-    category: "Sports · Competition",
-    description: "Design, build, and race vehicles with multidisciplinary student teams.",
-    rating: 4.9,
-    reviewCount: 64,
-    commitment: "serious",
-    tags: ["Career value", "Project-based"],
-  },
-  {
-    id: "cal-poly-entrepreneurs",
-    slug: "cal-poly-entrepreneurs",
-    name: "Cal Poly Entrepreneurs",
-    initials: "CPE",
-    category: "Major Specific · Business",
-    description: "Build ideas, meet founders, and explore entrepreneurship at any level.",
-    rating: 4.8,
-    reviewCount: 86,
-    commitment: "moderate",
-    tags: ["Networking", "All majors"],
-  },
-  {
-    id: "cal-poly-cycling",
-    slug: "cal-poly-cycling",
-    name: "Cal Poly Cycling",
-    initials: "CPC",
-    category: "Sports · Recreation",
-    description: "Join group rides, build new skills, and compete in collegiate cycling.",
-    rating: 4.7,
-    reviewCount: 38,
-    commitment: "high",
-    tags: ["Beginner-friendly", "Outdoors"],
-  },
-  {
-    id: "wish",
-    slug: "women-in-software-and-hardware",
-    name: "Women in Software & Hardware",
-    initials: "WISH",
-    category: "Major Specific · Computing",
-    description: "A welcoming community for mentorship and professional growth in computing.",
-    rating: 4.6,
-    reviewCount: 51,
-    commitment: "low",
-    tags: ["Mentorship", "Community"],
-  },
-  {
-    id: "cal-poly-robotics",
-    slug: "cal-poly-robotics",
-    name: "Cal Poly Robotics",
-    initials: "CPR",
-    category: "Engineering · Technology",
-    description: "Create autonomous robots through mechanical, electrical, and software projects.",
-    rating: 4.5,
-    reviewCount: 72,
-    commitment: "serious",
-    tags: ["Project-based", "Technical"],
-  },
-  {
-    id: "mustang-media-group",
-    slug: "mustang-media-group",
-    name: "Mustang Media Group",
-    initials: "MMG",
-    category: "Media · Creative",
-    description: "Tell campus stories through journalism, radio, video, design, and live production.",
-    rating: 4.4,
-    reviewCount: 43,
-    commitment: "moderate",
-    tags: ["Portfolio building", "Creative"],
-  },
-  {
-    id: "poly-reps",
-    slug: "poly-reps",
-    name: "Poly Reps",
-    initials: "PR",
-    category: "Leadership · Service",
-    description: "Represent Cal Poly, welcome visitors, and grow as a student leader and ambassador.",
-    rating: 4.3,
-    reviewCount: 29,
-    commitment: "high",
-    tags: ["Leadership", "Service"],
-  },
-  {
-    id: "slo-hacks",
-    slug: "slo-hacks",
-    name: "SLO Hacks",
-    initials: "SLO",
-    category: "Technology · Community",
-    description: "Organize inclusive hackathons where students turn ideas into working projects.",
-    rating: 4.2,
-    reviewCount: 47,
-    commitment: "low",
-    tags: ["All majors", "Technology"],
-  },
-  {
-    id: "cal-poly-dancesport",
-    slug: "cal-poly-dancesport",
-    name: "Cal Poly DanceSport",
-    initials: "CPD",
-    category: "Arts · Recreation",
-    description: "Learn ballroom and Latin dance in a social and beginner-friendly setting.",
-    rating: 4.1,
-    reviewCount: 35,
-    commitment: "moderate",
-    tags: ["Beginner-friendly", "Social"],
-  },
-  {
-    id: "engineers-without-borders",
-    slug: "engineers-without-borders",
-    name: "Engineers Without Borders",
-    initials: "EWB",
-    category: "Service · Engineering",
-    description: "Partner with communities on sustainable engineering projects with real-world impact.",
-    rating: 4.0,
-    reviewCount: 58,
-    commitment: "serious",
-    tags: ["Service", "Engineering"],
-  },
-  {
-    id: "photography-club",
-    slug: "cal-poly-photography-club",
-    name: "Cal Poly Photography Club",
-    initials: "CPP",
-    category: "Creative · Social",
-    description: "Practice photography, join photo walks, and learn from creators at every skill level.",
-    rating: 3.9,
-    reviewCount: 24,
-    commitment: "none",
-    tags: ["Creative", "Beginner-friendly"],
-  },
-  {
-    id: "mustang-film-society",
-    slug: "mustang-film-society",
-    name: "Mustang Film Society",
-    initials: "MFS",
-    category: "Arts · Social",
-    description: "Watch, discuss, and create films with a community of curious student storytellers.",
-    rating: 3.8,
-    reviewCount: 31,
-    commitment: "none",
-    tags: ["Social", "Creative"],
-  },
-];
+type ClubRow = {
+  id: number;
+  name: string;
+  description: string;
+  image: string | null;
+  club_statistics: Record<string, unknown> | null;
+  tags: string[] | null;
+  contact_links: unknown;
+};
 
-/** Default navigation function. Exported so it can also be called elsewhere. */
-export function goToClubPage(club: Club) {
-  window.location.assign(`/clubs/${encodeURIComponent(club.slug)}`);
+const CONTACT_PLATFORMS = ["instagram", "discord", "groupme", "website"] as const;
+
+function commitmentFrom(value: unknown): CommitmentLevel {
+  const normalized = String(value ?? "").toLowerCase();
+  if (normalized.includes("serious")) return "serious";
+  if (normalized.includes("high")) return "high";
+  if (normalized.includes("low")) return "low";
+  if (normalized.includes("no commitment") || normalized.includes("none")) return "none";
+  return "moderate";
+}
+
+function optionalNumber(value: unknown) {
+  return typeof value === "number" && Number.isFinite(value) ? value : undefined;
+}
+
+function contactLinksFrom(value: unknown): NonNullable<Club["contactLinks"]> {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((link) => {
+    if (!link || typeof link !== "object") return [];
+    const { platform, url } = link as { platform?: unknown; url?: unknown };
+    if (typeof url !== "string" || !CONTACT_PLATFORMS.includes(platform as typeof CONTACT_PLATFORMS[number])) return [];
+    return [{ platform: platform as NonNullable<Club["contactLinks"]>[number]["platform"], url }];
+  });
+}
+
+function clubFromRow(row: ClubRow): Club {
+  const stats = row.club_statistics ?? {};
+  return {
+    id: String(row.id),
+    slug: String(row.id),
+    name: row.name,
+    category: row.tags?.[0] ?? "Campus club",
+    description: row.description,
+    rating: optionalNumber(stats.enjoyment_rating ?? stats.rating),
+    reviewCount: optionalNumber(stats.review_count),
+    commitment: commitmentFrom(stats.commitment_level),
+    tags: row.tags ?? [],
+    logoUrl: row.image ?? undefined,
+    contactLinks: contactLinksFrom(row.contact_links),
+  };
 }
 
 function ClubLogo({ club }: { club: Club }) {
@@ -255,22 +156,29 @@ function ClubCard({ club, onSelect }: { club: Club; onSelect: (club: Club) => vo
       </div>
 
       <div className="club-side">
-        <div className="club-rating-block">
-          <div className="club-rating" aria-label={`${club.rating.toFixed(1)} out of 5 stars`}>
-            <span>{club.rating.toFixed(1)}</span><span className="club-star" aria-hidden="true">★</span>
+        {club.rating !== undefined ? (
+          <div className="club-rating-block">
+            <div className="club-rating" aria-label={`${club.rating.toFixed(1)} out of 4 stars`}>
+              <span>{club.rating.toFixed(1)}</span><span className="club-star" aria-hidden="true">★</span>
+            </div>
+            <div
+              className="club-reviews"
+              aria-label={`${club.rating.toFixed(1)} out of 4 stars${club.reviewCount !== undefined ? ` from ${club.reviewCount} reviews` : ""}`}
+            >
+              ★★★★
+            </div>
           </div>
-          <div className="club-reviews">{club.reviewCount} verified reviews</div>
-        </div>
+        ) : <span className="club-rating-unavailable">No ratings yet</span>}
         <span className="view-club" aria-hidden="true">View club <span>→</span></span>
       </div>
     </article>
   );
 }
 
-export default function ClubListingsPage({
-  clubs = SAMPLE_CLUBS,
-  onClubClick = goToClubPage,
-}: ClubListingsPageProps) {
+export default function ClubListingsPage({ onClubClick }: ClubListingsPageProps) {
+  const [clubs, setClubs] = useState<Club[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [sortMode, setSortMode] = useState<SortMode>("rating-desc");
   const [sortOpen, setSortOpen] = useState(false);
@@ -282,6 +190,30 @@ export default function ClubListingsPage({
     };
     document.addEventListener("mousedown", closeOnOutsideClick);
     return () => document.removeEventListener("mousedown", closeOnOutsideClick);
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadClubs() {
+      const { data, error } = await supabase
+        .schema("public")
+        .from("clubs")
+        .select("id, name, description, image, club_statistics, tags, contact_links")
+        .eq("approved", true)
+        .order("created_at", { ascending: false });
+
+      if (!active) return;
+      if (error) {
+        setLoadError(error.message);
+      } else {
+        setClubs((data as ClubRow[]).map(clubFromRow));
+      }
+      setLoading(false);
+    }
+
+    loadClubs();
+    return () => { active = false; };
   }, []);
 
   const visibleClubs = useMemo(() => {
@@ -296,8 +228,8 @@ export default function ClubListingsPage({
       : [...clubs];
 
     return filtered.sort((a, b) => {
-      if (sortMode === "rating-desc") return b.rating - a.rating;
-      if (sortMode === "rating-asc") return a.rating - b.rating;
+      if (sortMode === "rating-desc") return (b.rating ?? -1) - (a.rating ?? -1);
+      if (sortMode === "rating-asc") return (a.rating ?? Number.POSITIVE_INFINITY) - (b.rating ?? Number.POSITIVE_INFINITY);
       if (sortMode === "commitment-desc") return COMMITMENT[b.commitment].rank - COMMITMENT[a.commitment].rank;
       return COMMITMENT[a.commitment].rank - COMMITMENT[b.commitment].rank;
     });
@@ -311,7 +243,7 @@ export default function ClubListingsPage({
       <div className="clubs-title-row">
         <h1>Popular across Cal Poly</h1>
         <p className="clubs-count" aria-live="polite">
-          {visibleClubs.length} {visibleClubs.length === 1 ? "club" : "clubs"}{query ? " found" : ""}
+          {loading ? "Loading clubs…" : `${visibleClubs.length} ${visibleClubs.length === 1 ? "club" : "clubs"}${query ? " found" : ""}`}
         </p>
       </div>
 
@@ -363,10 +295,14 @@ export default function ClubListingsPage({
         </div>
       </div>
 
-      {visibleClubs.length > 0 ? (
+      {loading ? (
+        <div className="clubs-empty"><h2>Loading clubs…</h2></div>
+      ) : loadError ? (
+        <div className="clubs-empty"><h2>Could not load clubs</h2><p>{loadError}</p></div>
+      ) : visibleClubs.length > 0 ? (
         <section className="clubs-list" aria-label="Club listings">
           {visibleClubs.map((club) => (
-            <ClubCard club={club} onSelect={onClubClick} key={club.id} />
+            <ClubCard club={club} onSelect={onClubClick ?? (() => undefined)} key={club.id} />
           ))}
         </section>
       ) : (

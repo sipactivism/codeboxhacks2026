@@ -3,31 +3,67 @@ import {
   ArrowLeft,
   CalendarDays,
   Clock3,
+  CircleUserRound,
   ExternalLink,
+  Globe2,
   MapPin,
   MessageCircle,
   Plus,
   Star,
   Users,
 } from "lucide-react";
+import { FaDiscord, FaInstagram } from "react-icons/fa";
+import { SiGroupme } from "react-icons/si";
+import type { Club } from "../clubview/ClubListingsPage";
 
 import "./ClubDetail.css";
 
 type ClubDetailProps = {
   onBack: () => void;
+  club?: Club;
 };
 
-const contacts = [
-  { label: "Instagram", handle: "@calpolyrobotics", href: "https://instagram.com" },
-  { label: "Discord", handle: "Join the server", href: "https://discord.com" },
-  { label: "Website", handle: "clubrobotics.org", href: "https://example.com" },
+const contactIcons = {
+  instagram: FaInstagram,
+  discord: FaDiscord,
+  groupme: SiGroupme,
+  website: Globe2,
+};
+
+const commitmentDetails = {
+  none: { label: "No commitment", detail: "Drop in whenever you want" },
+  low: { label: "Low commitment", detail: "Events every once in a while" },
+  moderate: { label: "Moderate commitment", detail: "A few hours each week" },
+  high: { label: "High commitment", detail: "3–5 hours each week" },
+  serious: { label: "Serious commitment", detail: "6+ hours each week" },
+};
+
+const mockReviews = [
+  {
+    date: "May 12, 2026",
+    dateTime: "2026-05-12",
+    schoolYear: "Third-year",
+    body: "Everyone is willing to teach. I joined without experience and had a project to show off by the end of the quarter.",
+  },
+  {
+    date: "April 28, 2026",
+    dateTime: "2026-04-28",
+    schoolYear: "Fourth-year",
+    body: "A great balance of build nights, competition prep, and a genuinely fun group of people.",
+  },
 ];
 
-export function ClubDetail({ onBack }: ClubDetailProps) {
+export function ClubDetail({ onBack, club }: ClubDetailProps) {
   const [reviewOpen, setReviewOpen] = useState(false);
   const [commitment, setCommitment] = useState(3);
   const [enjoyment, setEnjoyment] = useState(0);
   const [comment, setComment] = useState("");
+  const clubName = club?.name ?? "Cal Poly Robotics";
+  const clubDescription = club?.description ?? "A hands-on community for students who want to design, build, and compete with robots together.";
+  const clubTags = club?.tags ?? ["Engineering", "Robotics", "Build teams"];
+  const commitmentLevel = club?.commitment ?? "moderate";
+  const commitmentInfo = commitmentDetails[commitmentLevel];
+  const contactLinks = club?.contactLinks ?? [];
 
   return (
     <main className="club-detail">
@@ -39,14 +75,9 @@ export function ClubDetail({ onBack }: ClubDetailProps) {
         <section className="club-detail__hero" aria-labelledby="club-title">
           <div className="club-detail__mark" aria-hidden="true">CR</div>
           <div className="club-detail__headline">
-            <div className="club-detail__eyebrow">ENGINEERING · ACTIVE CLUB</div>
-            <h1 id="club-title">Cal Poly Robotics</h1>
-            <p>
-              A hands-on community for students who want to design, build, and
-              compete with robots together.
-            </p>
+            <h1 id="club-title">{clubName}</h1>
             <div className="club-detail__tags" aria-label="Club tags">
-              <span>Engineering</span><span>Robotics</span><span>Build teams</span>
+              {clubTags.map((tag) => <span key={tag}>{tag}</span>)}
             </div>
           </div>
           <button
@@ -59,61 +90,120 @@ export function ClubDetail({ onBack }: ClubDetailProps) {
         </section>
 
         <div className="club-detail__grid">
-          <section className="detail-card club-detail__about">
-            <div className="detail-card__heading">
-              <div>
-                <p className="section-kicker">AT A GLANCE</p>
-                <h2>Club details</h2>
-              </div>
-              <span className="club-detail__updated">Updated this month</span>
-            </div>
-            <div className="club-detail__facts">
-              <div><MapPin size={18} /><span><b>Meeting room</b>14-0233</span></div>
-              <div><CalendarDays size={18} /><span><b>Established</b>Fall 2016</span></div>
-              <div><Users size={18} /><span><b>Open to</b>All majors</span></div>
-              <div><Clock3 size={18} /><span><b>Meets</b>Thursdays at 6 PM</span></div>
-            </div>
+          <section className="detail-card club-detail__description">
+            <p>{clubDescription}</p>
           </section>
 
-          <aside className="detail-card club-detail__ratings" aria-label="Club ratings">
-            <p className="section-kicker">STUDENT RATINGS</p>
-            <div className="club-detail__score"><strong>4.7</strong><span><Star size={15} fill="currentColor" /> 42 reviews</span></div>
-            <div className="club-detail__meter"><span>Commitment</span><div><i style={{ width: "62%" }} /></div><b>Moderate</b></div>
-            <div className="club-detail__meter"><span>Enjoyment</span><div><i style={{ width: "94%" }} /></div><b>Excellent</b></div>
-          </aside>
+          <div className="club-detail__right-rail">
+            <section className="detail-card club-detail__official">
+              <div className="detail-card__heading">
+                <div>
+                  <div className="detail-card__title">
+                    <h2>Official details</h2>
+                    <span
+                      className="club-detail__info-tip"
+                      tabIndex={0}
+                      aria-label="Some of these details were submitted by the club."
+                      data-tooltip="Some of these details were submitted by the club."
+                    >
+                      i
+                    </span>
+                  </div>
+                </div>
+                <span className="club-detail__updated">Updated this month</span>
+              </div>
+              <div className="club-detail__facts">
+                <div><MapPin size={18} /><span><b>Meeting room</b>14-0233</span></div>
+                <div><CalendarDays size={18} /><span><b>Established</b>Fall 2016</span></div>
+                <div><Users size={18} /><span><b>Open to</b>All majors</span></div>
+                <div><Clock3 size={18} /><span><b>Meets</b>Thursdays at 6 PM</span></div>
+              </div>
+              <div className="club-detail__commitment-summary">
+                <span className={`club-detail__commitment-dot club-detail__commitment-dot--${commitmentLevel}`} aria-hidden="true" />
+                <div><b>{commitmentInfo.label}</b><p>{commitmentInfo.detail}</p></div>
+              </div>
+            </section>
+
+            <section className="detail-card club-detail__community" aria-label="Community details">
+              <div className="detail-card__title">
+                <h2>Community details</h2>
+                <span
+                  className="club-detail__info-tip"
+                  tabIndex={0}
+                  aria-label="These details were submitted by members of the campus community."
+                  data-tooltip="These details were submitted by members of the campus community."
+                >
+                  i
+                </span>
+              </div>
+              <div className="club-detail__community-metrics">
+                <div className="club-detail__community-metric">
+                  <b>Enjoyment</b>
+                  <span className="club-detail__score" aria-label="Enjoyment rating">★★★★</span>
+                </div>
+                <div className="club-detail__community-metric">
+                  <b>Commitment</b>
+                  <div className="club-detail__community-commitment">
+                    <span className={`club-detail__commitment-dot club-detail__commitment-dot--${commitmentLevel}`} aria-hidden="true" />
+                    <span>{commitmentInfo.label}</span>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            {contactLinks.length > 0 && (
+              <aside className="detail-card club-detail__contact">
+                <h2>Connect with the club</h2>
+                <div className="club-detail__contact-icons">
+                  {contactLinks.map((contact) => {
+                    const Icon = contactIcons[contact.platform];
+                    return (
+                      <a
+                        key={contact.platform}
+                        href={contact.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        aria-label={contact.platform}
+                        title={contact.platform}
+                      >
+                        <Icon size={22} aria-hidden="true" />
+                        <ExternalLink size={12} aria-hidden="true" />
+                      </a>
+                    );
+                  })}
+                </div>
+              </aside>
+            )}
+          </div>
 
           <section className="detail-card club-detail__comments">
             <div className="detail-card__heading">
-              <div><p className="section-kicker">COMMUNITY NOTES</p><h2>What members say</h2></div>
+              <div><h2>Reviews</h2></div>
               <MessageCircle size={21} aria-hidden="true" />
             </div>
-            <article className="club-detail__comment">
-              <span className="club-detail__avatar">JM</span>
-              <div><div><b>Jordan M.</b><small> · Computer Science, ‘27</small></div><p>Everyone is willing to teach. I joined without experience and had a project to show off by the end of the quarter.</p></div>
-            </article>
-            <article className="club-detail__comment">
-              <span className="club-detail__avatar club-detail__avatar--gold">AC</span>
-              <div><div><b>Avery C.</b><small> · Mechanical Engineering, ‘26</small></div><p>A great balance of build nights, competition prep, and a genuinely fun group of people.</p></div>
-            </article>
+            {mockReviews.map((review, index) => (
+              <article className="club-detail__comment" key={review.dateTime}>
+                <span className={`club-detail__avatar${index === 1 ? " club-detail__avatar--gold" : ""}`} aria-hidden="true"><CircleUserRound size={21} /></span>
+                <div>
+                  <div className="club-detail__review-meta">
+                    <b>Anonymous</b>
+                    <span>{review.schoolYear}</span>
+                    <time dateTime={review.dateTime}>{review.date}</time>
+                  </div>
+                  <p>{review.body}</p>
+                </div>
+              </article>
+            ))}
           </section>
-
-          <aside className="detail-card club-detail__contact">
-            <p className="section-kicker">STAY CONNECTED</p>
-            <h2>Contact the club</h2>
-            <div>
-              {contacts.map((contact) => <a key={contact.label} href={contact.href} target="_blank" rel="noreferrer"><span>{contact.label}<small>{contact.handle}</small></span><ExternalLink size={16} /></a>)}
-            </div>
-          </aside>
         </div>
       </div>
 
       {reviewOpen && (
         <div className="review-dialog-backdrop" role="presentation" onMouseDown={() => setReviewOpen(false)}>
           <section className="review-dialog" role="dialog" aria-modal="true" aria-labelledby="review-title" onMouseDown={(event) => event.stopPropagation()}>
-            <p className="section-kicker">YOUR EXPERIENCE</p>
-            <h2 id="review-title">Review Cal Poly Robotics</h2>
+            <h2 id="review-title">Review {clubName}</h2>
             <label>Weekly commitment <b>{["Low", "Light", "Moderate", "High", "Serious"][commitment - 1]}</b><input type="range" min="1" max="5" value={commitment} onChange={(event) => setCommitment(Number(event.target.value))} /></label>
-            <fieldset><legend>How much did you enjoy it?</legend><div className="review-dialog__stars">{[1, 2, 3, 4, 5].map((rating) => <button type="button" key={rating} aria-label={`${rating} stars`} onClick={() => setEnjoyment(rating)}><Star fill={rating <= enjoyment ? "currentColor" : "none"} /></button>)}</div></fieldset>
+            <fieldset><legend>How much did you enjoy it?</legend><div className="review-dialog__stars">{[1, 2, 3, 4].map((rating) => <button type="button" key={rating} aria-label={`${rating} stars`} onClick={() => setEnjoyment(rating)}><Star fill={rating <= enjoyment ? "currentColor" : "none"} /></button>)}</div></fieldset>
             <label>Leave a note<textarea value={comment} onChange={(event) => setComment(event.target.value)} placeholder="What should other students know?" /></label>
             <div className="review-dialog__actions"><button type="button" onClick={() => setReviewOpen(false)}>Cancel</button><button type="button" className="review-dialog__submit" onClick={() => setReviewOpen(false)}>Post review</button></div>
           </section>
