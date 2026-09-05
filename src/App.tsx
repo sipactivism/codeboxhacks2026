@@ -6,6 +6,7 @@ import type {
   BrowseCategory,
   ClubFilters,
 } from "./types/clubs";
+import ClubListingsPage from "./components/clubview/ClubListingsPage";
 
 function App() {
 
@@ -33,9 +34,10 @@ function PageContainer()
     <HomePage
       onOpenCategory={openCategory}
       onCreateClub={() => {
-        setPageNum(2);
+        setPageNum(3);
       }}
     />);
     case 2: return (<CreatePage></CreatePage>);
+    case 3: return (<ClubListingsPage></ClubListingsPage>);
   }
 }
