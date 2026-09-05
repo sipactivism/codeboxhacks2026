@@ -12,7 +12,7 @@ import {
   Users,
   X,
 } from "lucide-react";
-import '/src/components/createpage/createpagestyle.css'
+import "/src/components/createpage/createpagestyle.css";
 import { PageContext } from "../../PageContext";
 import { supabase } from "../../utils/supabase";
 
