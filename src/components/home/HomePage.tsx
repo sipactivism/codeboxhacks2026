@@ -77,7 +77,7 @@ export function HomePage({
             onClick={onCreateClub}
           >
             <span aria-hidden="true">＋</span>
-            Create club
+            Add your club
           </button>
         </div>
       </section>

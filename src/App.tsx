@@ -1,25 +1,42 @@
+import { useContext } from "react";
+import CreatePage from "./components/createpage";
 import { HomePage } from "./components/home/HomePage";
+import { PageContext, PageProvider } from "./PageContext";
 import type {
   BrowseCategory,
   ClubFilters,
 } from "./types/clubs";
 
 function App() {
-  function openCategory(
+
+  return (
+    <PageProvider>
+      <PageContainer />
+    </PageProvider>
+  );
+}
+
+export default App;
+
+function PageContainer()
+{
+   function openCategory(
     category: BrowseCategory,
     filters: ClubFilters,
   ) {
     console.log(category, filters);
   }
 
-  return (
+  const {pageNum, setPageNum} = useContext(PageContext);
+  console.log(pageNum);
+  switch(pageNum){
+    case 1: return (
     <HomePage
       onOpenCategory={openCategory}
       onCreateClub={() => {
-        console.log("Open create-club page");
+        setPageNum(2);
       }}
-    />
-  );
+    />);
+    case 2: return (<CreatePage></CreatePage>);
+  }
 }
-
-export default App;
