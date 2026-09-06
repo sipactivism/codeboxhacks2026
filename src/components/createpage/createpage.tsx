@@ -14,61 +14,8 @@ import {
 } from "lucide-react";
 import "/src/components/createpage/createpagestyle.css";
 import { PageContext } from "../../PageContext";
+import { majorGroups } from "../../data/majors";
 import { supabase } from "../../utils/supabase";
-
-const majorGroups = {
-  Engineering: [
-    "Aerospace Engineering",
-    "Architectural Engineering",
-    "Biomedical Engineering",
-    "Civil Engineering",
-    "Computer Engineering",
-    "Computer Science",
-    "Electrical Engineering",
-    "Environmental Engineering",
-    "General Engineering",
-    "Industrial Engineering",
-    "Manufacturing Engineering",
-    "Materials Engineering",
-    "Mechanical Engineering",
-    "Software Engineering",
-  ],
-  "Science & Math": [
-    "Biochemistry",
-    "Biological Sciences",
-    "Chemistry",
-    "Environmental Earth & Soil Sciences",
-    "Kinesiology",
-    "Mathematics",
-    "Physics",
-    "Statistics",
-  ],
-  "Other Cal Poly majors": [
-    "Agricultural Business",
-    "Animal Science",
-    "Architecture",
-    "Art & Design",
-    "Business Administration",
-    "City & Regional Planning",
-    "Communication Studies",
-    "Construction Management",
-    "Economics",
-    "English",
-    "Ethnic Studies",
-    "Graphic Communication",
-    "History",
-    "Liberal Studies",
-    "Music",
-    "Philosophy",
-    "Political Science",
-    "Psychology",
-    "Public Health",
-    "Recreation Administration",
-    "Sociology",
-    "Theatre Arts",
-    "Wine and Viticulture",
-  ],
-};
 
 const spectrum = [
   ["No commitment", "Drop in whenever you want", "mint"],
@@ -77,6 +24,15 @@ const spectrum = [
   ["High commitment", "3–5 hours each week", "rose"],
   ["Serious commitment", "6+ hours each week", "coral"],
 ];
+
+const clubTypes = [
+  ["sport", "Sport", "This club is a sport"],
+  ["culture", "Culture", "This is a culture club"],
+  ["art", "Art", "Any kind of art"],
+  ["academic", "Academic", "Has to do with a major or academics"],
+  ["fun", "Fun", "EX: Hummus Club"],
+  ["other", "Other", "None of the previous options"],
+] as const;
 
 const CLUB_IMAGES_BUCKET = "club_icons";
 
@@ -92,6 +48,7 @@ function CreatePage() {
   const [majors, setMajors] = useState<string[]>([]);
   const [majorOpen, setMajorOpen] = useState(false);
   const [commitment, setCommitment] = useState(2);
+  const [clubType, setClubType] = useState<string | null>(null);
   const [created, setCreated] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -116,6 +73,14 @@ function CreatePage() {
       setError("Enter a club name and short description before creating it.");
       return;
     }
+
+    if (!clubType) {
+      setError("Select a type for your club before creating it.");
+      return;
+    }
+
+    const typeTag = `#${clubType}`;
+    const clubTags = tags.includes(typeTag) ? tags : [...tags, typeTag];
 
     setSubmitting(true);
     setError(null);
@@ -163,7 +128,7 @@ function CreatePage() {
         },
         club_info_last_updated: new Date().toISOString(),
         meeting_info: [],
-        tags,
+        tags: clubTags,
         contact_links: Object.entries(contactLinks)
           .filter(([, value]) => value.trim())
           .map(([platform, url]) => ({ platform, url })),
@@ -408,7 +373,40 @@ function CreatePage() {
             </div>
           </div>
           <div className="section-title lower">
-            <span className="step">03</span>
+            <span className="step">04</span>
+            <div>
+              <h2>Select the type of club</h2>
+              <p>Do any of these apply to your club?</p>
+              <br/>
+            </div>
+          </div>
+          <div
+            className="club-types"
+            role="radiogroup"
+            aria-label="Club type"
+            style={{ display: "flex", flexWrap: "nowrap", gap: "10px" }}
+          >
+            {clubTypes.map(([value, label, description]) => (
+              <button
+                className="upload"
+                type="button"
+                role="radio"
+                aria-checked={clubType === value}
+                aria-label={`${label}: ${description}`}
+                key={value}
+                onClick={() => setClubType(value)}
+                style={
+                  clubType === value
+                    ? { borderColor: "#2e6244", background: "#edf5ec", boxShadow: "0 0 0 3px #cfe3d1" }
+                    : undefined
+                }
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          <div className="section-title lower">
+            <span className="step">05</span>
             <div>
               <h2>Ways to connect</h2>
               <p>Add any links you’d like students to use.</p>

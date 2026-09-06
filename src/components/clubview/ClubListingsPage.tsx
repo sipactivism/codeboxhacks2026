@@ -1,5 +1,6 @@
 import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import type { KeyboardEvent } from "react";
+import { MoreHorizontal } from "lucide-react";
 import { supabase } from "../../utils/supabase";
 import "./Club-Listings.css";
 import { PageContext } from "../../PageContext";
@@ -20,6 +21,7 @@ export interface Club {
   reviewCount?: number;
   commitment: CommitmentLevel;
   tags: string[];
+  majors: string[];
   logoUrl?: string;
   logoAlt?: string;
   initials?: string;
@@ -107,6 +109,9 @@ function clubFromRow(row: ClubRow): Club {
     reviewCount: optionalNumber(stats.review_count),
     commitment: commitmentFrom(stats.commitment_level),
     tags: row.tags ?? [],
+    majors: Array.isArray(stats.majors)
+      ? stats.majors.filter((major): major is string => typeof major === "string")
+      : [],
     logoUrl: row.image ?? undefined,
     contactLinks: contactLinksFrom(row.contact_links),
   };
@@ -127,6 +132,7 @@ function ClubLogo({ club }: { club: Club }) {
 
 function ClubCard({ club, onSelect }: { club: Club; onSelect: (club: Club) => void }) {
   const commitment = COMMITMENT[club.commitment];
+  const [showMajors, setShowMajors] = useState(false);
 
   const handleKeyDown = (event: KeyboardEvent<HTMLElement>) => {
     if (event.key === "Enter" || event.key === " ") {
@@ -155,6 +161,22 @@ function ClubCard({ club, onSelect }: { club: Club; onSelect: (club: Club) => vo
               {commitment.label}
             </span>
             {club.tags.map((tag) => <span className="club-tag" key={tag}>{tag}</span>)}
+            {club.majors.length > 0 && (
+              <button
+                className="club-major-toggle"
+                type="button"
+                aria-label={showMajors ? "Hide majors" : "Show majors"}
+                aria-expanded={showMajors}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  setShowMajors((current) => !current);
+                }}
+                onKeyDown={(event) => event.stopPropagation()}
+              >
+                <MoreHorizontal size={19} aria-hidden="true" />
+              </button>
+            )}
+            {showMajors && club.majors.map((major) => <span className="club-major" key={major}>{major}</span>)}
           </div>
         </div>
       </div>
@@ -207,8 +229,9 @@ export default function ClubListingsPage({
     async function loadClubs() {
       const searchTerm = submittedQuery
         .trim()
-        .replace(/[^a-zA-Z0-9\s_-]/g, " ")
-        .replace(/\s+/g, " ");
+        .replace(/[^a-zA-Z0-9\s_#-]/g, " ")
+        .replace(/\s+/g, " ")
+        .toLowerCase();
       let query = supabase
         .schema("public")
         .from("clubs")
@@ -218,7 +241,7 @@ export default function ClubListingsPage({
 
       if (searchTerm) {
         query = query.or(
-          `name.ilike.*${searchTerm}*,description.ilike.*${searchTerm}*,tags.cs.{${searchTerm}},club_statistics->>commitment_level.ilike.*${searchTerm}*`,
+          `name.ilike.*${searchTerm}*,description.ilike.*${searchTerm}*,tags.cs.{${searchTerm}},club_statistics->>commitment_level.ilike.*${searchTerm}*,club_statistics->>majors.ilike.*${searchTerm}*`,
         );
       }
 
@@ -257,6 +280,7 @@ export default function ClubListingsPage({
             club.name,
             club.description,
             ...club.tags,
+            ...club.majors,
             club.commitment,
             COMMITMENT[club.commitment].label,
           ];

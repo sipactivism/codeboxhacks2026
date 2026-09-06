@@ -214,6 +214,7 @@
 .club-tags { display: flex; flex-wrap: wrap; gap: 8px; }
 
 .club-tag,
+.club-major,
 .commitment-pill {
   display: inline-flex;
   min-height: 34px;
@@ -226,7 +227,27 @@
   line-height: 1;
 }
 
+.club-major { background: #e5edf0; }
 .club-tag { background: var(--clubs-chip); }
+.club-major-toggle {
+  display: inline-grid;
+  width: 34px;
+  min-height: 34px;
+  place-items: center;
+  padding: 0;
+  border: 1px solid var(--clubs-line);
+  border-radius: 999px;
+  color: var(--clubs-muted);
+  background: #e5edf0;
+  cursor: pointer;
+}
+
+.club-major-toggle:hover,
+.club-major-toggle[aria-expanded="true"] {
+  color: var(--clubs-green);
+  background: #e5edf0;
+}
+
 .commitment-pill { border-color: rgba(20, 32, 25, .18); }
 .commitment-dot { width: 8px; height: 8px; margin-right: 8px; border-radius: 50%; background: currentColor; }
 .commitment--none { color: #315f2b; background: #dfecd8; }

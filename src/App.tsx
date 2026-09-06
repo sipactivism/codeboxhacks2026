@@ -8,6 +8,13 @@ import { HomePage } from "./components/home/HomePage";
 import { PageContext, PageProvider } from "./PageContext";
 import type { BrowseCategory, ClubFilters } from "./types/clubs";
 
+const CATEGORY_SEARCH_TERMS: Partial<Record<BrowseCategory, string>> = {
+  sports: "#sport",
+  arts: "#art",
+  culture: "#culture",
+  fun: "#fun",
+};
+
 function App() {
   return (
     <PageProvider>
@@ -33,7 +40,9 @@ function PageContainer() {
     setFilters(
       category === "random"
         ? { ...currentFilters, query: "" }
-        : currentFilters,
+        : CATEGORY_SEARCH_TERMS[category]
+          ? { ...currentFilters, query: CATEGORY_SEARCH_TERMS[category] }
+          : currentFilters,
     );
     setPageNum(3);
   }
