@@ -7,7 +7,6 @@ import type { Club } from "./components/clubview/ClubListingsPage";
 import CreatePage from "./components/createpage/createpage";
 import { HomePage } from "./components/home/HomePage";
 import { RandomizeButton } from "./components/RandomizeButton/RandomizeButton";
-import { ThemeSwitch } from "./components/ThemeSwitch/ThemeSwitch";
 import { PageContext, PageProvider } from "./PageContext";
 import type { BrowseCategory, ClubFilters } from "./types/clubs";
 import { getApprovedClubRows } from "./utils/approvedClubs";
@@ -144,7 +143,6 @@ function PageContainer() {
       <AppHeader canGoBack={pageNum !== 1 && pageHistory.current.length > 0} onBack={goBack} />
       {page}
       <RandomizeButton onClick={randomizeClubs} />
-      <ThemeSwitch />
     </>
   );
 }
