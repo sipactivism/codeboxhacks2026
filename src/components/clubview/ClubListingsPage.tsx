@@ -52,11 +52,27 @@ const COMMITMENT: Record<
   CommitmentLevel,
   { label: string; detail: string; rank: number }
 > = {
-  none: { label: "No commitment", detail: "Drop in whenever you want", rank: 0 },
-  low: { label: "Low commitment", detail: "Events every once in a while", rank: 1 },
-  moderate: { label: "Moderate commitment", detail: "A few hours each week", rank: 2 },
+  none: {
+    label: "No commitment",
+    detail: "Drop in whenever you want",
+    rank: 0,
+  },
+  low: {
+    label: "Low commitment",
+    detail: "Events every once in a while",
+    rank: 1,
+  },
+  moderate: {
+    label: "Moderate commitment",
+    detail: "A few hours each week",
+    rank: 2,
+  },
   high: { label: "High commitment", detail: "3–5 hours each week", rank: 3 },
-  serious: { label: "Serious commitment", detail: "6+ hours each week", rank: 4 },
+  serious: {
+    label: "Serious commitment",
+    detail: "6+ hours each week",
+    rank: 4,
+  },
 };
 
 const SORT_OPTIONS: { value: SortMode; label: string }[] = [
@@ -66,24 +82,36 @@ const SORT_OPTIONS: { value: SortMode; label: string }[] = [
   { value: "commitment-asc", label: "Lowest commitment" },
 ];
 
-const CONTACT_PLATFORMS = ["instagram", "discord", "groupme", "website"] as const;
+const CONTACT_PLATFORMS = [
+  "instagram",
+  "discord",
+  "groupme",
+  "website",
+] as const;
 
 function commitmentFrom(value: unknown): CommitmentLevel {
   const normalized = String(value ?? "").toLowerCase();
   if (normalized.includes("serious")) return "serious";
   if (normalized.includes("high")) return "high";
   if (normalized.includes("low")) return "low";
-  if (normalized.includes("no commitment") || normalized.includes("none")) return "none";
+  if (normalized.includes("no commitment") || normalized.includes("none"))
+    return "none";
   return "moderate";
 }
 
 function optionalNumber(value: unknown) {
-  return typeof value === "number" && Number.isFinite(value) ? value : undefined;
+  return typeof value === "number" && Number.isFinite(value)
+    ? value
+    : undefined;
 }
 
-function commitmentFromAverage(value: number | undefined): CommitmentLevel | undefined {
+function commitmentFromAverage(
+  value: number | undefined,
+): CommitmentLevel | undefined {
   if (value === undefined || !Number.isFinite(value)) return undefined;
-  return (["none", "low", "moderate", "high", "serious"] as CommitmentLevel[])[Math.max(0, Math.min(4, Math.round(value) - 1))];
+  return (["none", "low", "moderate", "high", "serious"] as CommitmentLevel[])[
+    Math.max(0, Math.min(4, Math.round(value) - 1))
+  ];
 }
 
 function contactLinksFrom(value: unknown): NonNullable<Club["contactLinks"]> {
@@ -91,8 +119,21 @@ function contactLinksFrom(value: unknown): NonNullable<Club["contactLinks"]> {
   return value.flatMap((link) => {
     if (!link || typeof link !== "object") return [];
     const { platform, url } = link as { platform?: unknown; url?: unknown };
-    if (typeof url !== "string" || !CONTACT_PLATFORMS.includes(platform as typeof CONTACT_PLATFORMS[number])) return [];
-    return [{ platform: platform as NonNullable<Club["contactLinks"]>[number]["platform"], url }];
+    if (
+      typeof url !== "string" ||
+      !CONTACT_PLATFORMS.includes(
+        platform as (typeof CONTACT_PLATFORMS)[number],
+      )
+    )
+      return [];
+    return [
+      {
+        platform: platform as NonNullable<
+          Club["contactLinks"]
+        >[number]["platform"],
+        url,
+      },
+    ];
   });
 }
 
@@ -129,7 +170,9 @@ export function clubFromRow(row: ApprovedClubRow): Club {
     communityCommitmentCount: optionalNumber(row.community_commitment_count),
     tags: row.tags ?? [],
     majors: Array.isArray(stats.majors)
-      ? stats.majors.filter((major): major is string => typeof major === "string")
+      ? stats.majors.filter(
+          (major): major is string => typeof major === "string",
+        )
       : [],
     logoUrl: row.image ?? undefined,
     contactLinks: contactLinksFrom(row.contact_links),
@@ -145,11 +188,30 @@ function ClubLogo({ club }: { club: Club }) {
     );
   }
 
-  const fallback = club.initials ?? club.name.split(/\s+/).map((word) => word[0]).join("").slice(0, 4);
-  return <div className="club-logo club-logo--fallback" aria-label={`${club.name} logo`}>{fallback}</div>;
+  const fallback =
+    club.initials ??
+    club.name
+      .split(/\s+/)
+      .map((word) => word[0])
+      .join("")
+      .slice(0, 4);
+  return (
+    <div
+      className="club-logo club-logo--fallback"
+      aria-label={`${club.name} logo`}
+    >
+      {fallback}
+    </div>
+  );
 }
 
-function ClubCard({ club, onSelect }: { club: Club; onSelect: (club: Club) => void }) {
+function ClubCard({
+  club,
+  onSelect,
+}: {
+  club: Club;
+  onSelect: (club: Club) => void;
+}) {
   const communityLevel = commitmentFromAverage(club.communityCommitment);
   const commitment = communityLevel ? COMMITMENT[communityLevel] : undefined;
   const [showMajors, setShowMajors] = useState(false);
@@ -177,12 +239,28 @@ function ClubCard({ club, onSelect }: { club: Club; onSelect: (club: Club) => vo
           <p className="club-description">{club.description}</p>
           <div className="club-tags">
             {commitment && communityLevel ? (
-              <span className={`commitment-pill commitment--${communityLevel}`} title={`${commitment.label}, based on community reviews`} aria-label={`Average community commitment: ${club.communityCommitment!.toFixed(1)} out of 5, ${commitment.label}`}>
+              <span
+                className={`commitment-pill commitment--${communityLevel}`}
+                title={`${commitment.label}, based on community reviews`}
+                aria-label={`Average community commitment: ${club.communityCommitment!.toFixed(1)} out of 5, ${commitment.label}`}
+              >
                 <span className="commitment-dot" aria-hidden="true" />
                 {club.communityCommitment!.toFixed(1)} / 5 · {commitment.label}
               </span>
-            ) : <span className="commitment-pill commitment--unavailable">No community commitment yet</span>}
-            {club.tags.map((tag) => {if (!tag.includes("#")) return (<span className="club-tag" key={tag}>{tag}</span>); return null; })}
+            ) : (
+              <span className="commitment-pill commitment--unavailable">
+                No community commitment yet
+              </span>
+            )}
+            {club.tags.map((tag) => {
+              if (!tag.includes("#"))
+                return (
+                  <span className="club-tag" key={tag}>
+                    {tag}
+                  </span>
+                );
+              return null;
+            })}
             {club.majors.length > 0 && (
               <button
                 className="club-major-toggle"
@@ -198,7 +276,12 @@ function ClubCard({ club, onSelect }: { club: Club; onSelect: (club: Club) => vo
                 <MoreHorizontal size={19} aria-hidden="true" />
               </button>
             )}
-            {showMajors && club.majors.map((major) => <span className="club-major" key={major}>{major}</span>)}
+            {showMajors &&
+              club.majors.map((major) => (
+                <span className="club-major" key={major}>
+                  {major}
+                </span>
+              ))}
           </div>
         </div>
       </div>
@@ -206,19 +289,32 @@ function ClubCard({ club, onSelect }: { club: Club; onSelect: (club: Club) => vo
       <div className="club-side">
         {club.rating !== undefined ? (
           <div className="club-rating-block">
-            <div className="club-rating" aria-label={`${club.rating.toFixed(1)} out of 4 stars`}>
-              <RatingStars value={club.rating} size={18} label={`${club.rating.toFixed(1)} out of 4 stars`} />
+            <div
+              className="club-rating"
+              aria-label={`${club.rating.toFixed(1)} out of 4 stars`}
+            >
+              <RatingStars
+                value={club.rating}
+                size={18}
+                label={`${club.rating.toFixed(1)} out of 4 stars`}
+              />
               <span>{club.rating.toFixed(1)}</span>
             </div>
             <div
               className="club-reviews"
               aria-label={`${club.rating.toFixed(1)} out of 4 stars${club.reviewCount !== undefined ? ` from ${club.reviewCount} reviews` : ""}`}
             >
-              {club.reviewCount === 1 ? "1 review" : `${club.reviewCount ?? 0} reviews`}
+              {club.reviewCount === 1
+                ? "1 review"
+                : `${club.reviewCount ?? 0} reviews`}
             </div>
           </div>
-        ) : <span className="club-rating-unavailable">No ratings yet</span>}
-        <span className="view-club" aria-hidden="true">View club <span>→</span></span>
+        ) : (
+          <span className="club-rating-unavailable">No ratings yet</span>
+        )}
+        <span className="view-club" aria-hidden="true">
+          View club <span>→</span>
+        </span>
       </div>
     </article>
   );
@@ -258,17 +354,25 @@ export default function ClubListingsPage({
         setLoadError(null);
       } catch (error) {
         if (!active) return;
-        setLoadError(error instanceof Error ? error.message : "An unexpected error occurred.");
+        setLoadError(
+          error instanceof Error
+            ? error.message
+            : "An unexpected error occurred.",
+        );
       }
       if (active) setLoading(false);
     }
 
     loadClubs();
-    return () => { active = false; };
+    return () => {
+      active = false;
+    };
   }, []);
 
   const visibleClubs = useMemo(() => {
-    const normalizedQuery = (randomCategory ? "" : submittedQuery).trim().toLowerCase();
+    const normalizedQuery = (randomCategory ? "" : submittedQuery)
+      .trim()
+      .toLowerCase();
     const filtered = normalizedQuery
       ? clubs.filter((club) => {
           const searchableFields = [
@@ -277,7 +381,14 @@ export default function ClubListingsPage({
             ...club.tags,
             ...club.majors,
             club.commitment,
-            ...(club.communityCommitment !== undefined && commitmentFromAverage(club.communityCommitment) ? [COMMITMENT[commitmentFromAverage(club.communityCommitment)!].label, String(club.communityCommitment)] : []),
+            ...(club.communityCommitment !== undefined &&
+            commitmentFromAverage(club.communityCommitment)
+              ? [
+                  COMMITMENT[commitmentFromAverage(club.communityCommitment)!]
+                    .label,
+                  String(club.communityCommitment),
+                ]
+              : []),
           ];
 
           return searchableFields.some((field) =>
@@ -286,38 +397,60 @@ export default function ClubListingsPage({
         })
       : [...clubs];
 
-    const randomized = randomCategory ? shuffledClubs(filtered, randomSeed) : filtered;
+    const randomized = randomCategory
+      ? shuffledClubs(filtered, randomSeed)
+      : filtered;
 
-    const commitmentFiltered = filters.commitment === "all"
-      ? randomized
-      : randomized.filter((club) => {
-          const communityLevel = commitmentFromAverage(club.communityCommitment);
-          if (!communityLevel) return false;
-          if (filters.commitment === "low") return communityLevel === "none" || communityLevel === "low";
-          if (filters.commitment === "medium") return communityLevel === "moderate";
-          return communityLevel === "high" || communityLevel === "serious";
-        });
+    const commitmentFiltered =
+      filters.commitment === "all"
+        ? randomized
+        : randomized.filter((club) => {
+            const communityLevel = commitmentFromAverage(
+              club.communityCommitment,
+            );
+            if (!communityLevel) return false;
+            if (filters.commitment === "low")
+              return communityLevel === "none" || communityLevel === "low";
+            if (filters.commitment === "medium")
+              return communityLevel === "moderate";
+            return communityLevel === "high" || communityLevel === "serious";
+          });
 
-    const ratingFiltered = filters.minimumRating === 0
-      ? commitmentFiltered
-      : commitmentFiltered.filter((club) => (club.rating ?? 0) >= filters.minimumRating);
+    const ratingFiltered =
+      filters.minimumRating === 0
+        ? commitmentFiltered
+        : commitmentFiltered.filter(
+            (club) => (club.rating ?? 0) >= filters.minimumRating,
+          );
 
     return ratingFiltered.sort((a, b) => {
-      if (sortMode === "rating-desc") return (b.rating ?? -1) - (a.rating ?? -1);
-      if (sortMode === "rating-asc") return (a.rating ?? Number.POSITIVE_INFINITY) - (b.rating ?? Number.POSITIVE_INFINITY);
-      if (sortMode === "commitment-desc") return (b.communityCommitment ?? -1) - (a.communityCommitment ?? -1);
-      return (a.communityCommitment ?? Number.POSITIVE_INFINITY) - (b.communityCommitment ?? Number.POSITIVE_INFINITY);
+      if (sortMode === "rating-desc")
+        return (b.rating ?? -1) - (a.rating ?? -1);
+      if (sortMode === "rating-asc")
+        return (
+          (a.rating ?? Number.POSITIVE_INFINITY) -
+          (b.rating ?? Number.POSITIVE_INFINITY)
+        );
+      if (sortMode === "commitment-desc")
+        return (b.communityCommitment ?? -1) - (a.communityCommitment ?? -1);
+      return (
+        (a.communityCommitment ?? Number.POSITIVE_INFINITY) -
+        (b.communityCommitment ?? Number.POSITIVE_INFINITY)
+      );
     });
   }, [clubs, filters, randomCategory, randomSeed, sortMode, submittedQuery]);
 
-  const selectedSortLabel = SORT_OPTIONS.find((option) => option.value === sortMode)?.label;
+  const selectedSortLabel = SORT_OPTIONS.find(
+    (option) => option.value === sortMode,
+  )?.label;
 
   return (
     <main className="clubs-page">
       <div className="clubs-title-row">
-        <h1 className="clubratelogocolors">Club<span style={{ color: "var(--cal-poly-gold)" }}>Rate</span></h1>
         <p className="clubs-count" aria-live="polite">
-          {loading ? "Loading clubs…" : `${visibleClubs.length} ${visibleClubs.length === 1 ? "club" : "clubs"}${submittedQuery ? " found" : ""}`}
+          {loading
+            ? "Loading clubs…"
+            : `${visibleClubs.length} ${visibleClubs.length === 1 ? "club" : "clubs"}${submittedQuery ? " found" : ""}`}
         </p>
       </div>
 
@@ -355,7 +488,14 @@ export default function ClubListingsPage({
             aria-expanded={sortOpen}
             onClick={() => setSortOpen((open) => !open)}
           >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              aria-hidden="true"
+            >
               <path d="M4 6h16M7 12h10M10 18h4" />
             </svg>
           </button>
@@ -370,9 +510,13 @@ export default function ClubListingsPage({
                   role="menuitemradio"
                   aria-checked={sortMode === option.value}
                   key={option.value}
-                  onClick={() => { setSortMode(option.value); setSortOpen(false); }}
+                  onClick={() => {
+                    setSortMode(option.value);
+                    setSortOpen(false);
+                  }}
                 >
-                  {option.label}<span aria-hidden="true">✓</span>
+                  {option.label}
+                  <span aria-hidden="true">✓</span>
                 </button>
               ))}
             </div>
@@ -381,13 +525,22 @@ export default function ClubListingsPage({
       </form>
 
       {loading ? (
-        <div className="clubs-empty"><h2>Loading clubs…</h2></div>
+        <div className="clubs-empty">
+          <h2>Loading clubs…</h2>
+        </div>
       ) : loadError ? (
-        <div className="clubs-empty"><h2>Could not load clubs</h2><p>{loadError}</p></div>
+        <div className="clubs-empty">
+          <h2>Could not load clubs</h2>
+          <p>{loadError}</p>
+        </div>
       ) : visibleClubs.length > 0 ? (
         <section className="clubs-list" aria-label="Club listings">
           {visibleClubs.map((club) => (
-            <ClubCard club={club} onSelect={onClubClick ?? (() => undefined)} key={club.id} />
+            <ClubCard
+              club={club}
+              onSelect={onClubClick ?? (() => undefined)}
+              key={club.id}
+            />
           ))}
         </section>
       ) : (
