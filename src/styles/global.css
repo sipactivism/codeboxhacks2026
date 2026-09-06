@@ -24,53 +24,6 @@
   --floating-shadow: 0 10px 28px rgba(20, 32, 25, .18);
 }
 
-:root[data-theme="dark"] {
-  color-scheme: dark;
-  --background: #111914;
-  --surface: #18231d;
-  --surface-raised: #1e2c24;
-  --surface-muted: #22332a;
-  --input-surface: #131c17;
-  --text: #edf5ef;
-  --text-muted: #a9b8ae;
-  --border: #3a4d41;
-  --cal-poly-green: #58a47d;
-  --green-foreground: #07130c;
-  --cal-poly-gold: #e2b94d;
-  --gold-surface: #3d3216;
-  --danger: #ff8c83;
-  --overlay: rgba(0, 0, 0, .62);
-  --header-surface: rgba(17, 25, 20, .92);
-  --shadow: 0 16px 36px rgba(0, 0, 0, .32);
-  --floating-shadow: 0 12px 30px rgba(0, 0, 0, .42);
-}
-
-:root[data-theme="system"] {
-  color-scheme: light dark;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root[data-theme="system"] {
-    --background: #111914;
-    --surface: #18231d;
-    --surface-raised: #1e2c24;
-    --surface-muted: #22332a;
-    --input-surface: #131c17;
-    --text: #edf5ef;
-    --text-muted: #a9b8ae;
-    --border: #3a4d41;
-    --cal-poly-green: #58a47d;
-    --green-foreground: #07130c;
-    --cal-poly-gold: #e2b94d;
-    --gold-surface: #3d3216;
-    --danger: #ff8c83;
-    --overlay: rgba(0, 0, 0, .62);
-    --header-surface: rgba(17, 25, 20, .92);
-    --shadow: 0 16px 36px rgba(0, 0, 0, .32);
-    --floating-shadow: 0 12px 30px rgba(0, 0, 0, .42);
-  }
-}
-
 * {
   box-sizing: border-box;
 }
@@ -89,6 +42,18 @@ body {
     "Segoe UI",
     sans-serif;
   transition: background-color 180ms ease, color 180ms ease;
+}
+
+/* Hide the grey browser scrollbar without disabling page scrolling. */
+html,
+body {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  display: none;
 }
 
 button,
