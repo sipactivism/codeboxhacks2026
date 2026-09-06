@@ -454,7 +454,7 @@ export function ClubDetail({ club }: ClubDetailProps) {
           >
             <h2 id="review-title">Review {clubName}</h2>
             <fieldset className="review-dialog__commitment">
-              <legend>Weekly commitment<br/></legend>
+              <legend style={{ marginBottom: "8px" }}>Weekly commitment</legend>
               <div
                 className="review-dialog__commitment-options"
                 role="radiogroup"
