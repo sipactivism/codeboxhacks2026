@@ -203,8 +203,7 @@ export function ClubDetail({ club }: ClubDetailProps) {
     }
 
     if (!note) {
-      if (note) note = "-";
-      return;
+      note = "-";
     }
 
     const storedRating = starsToStoredRating(enjoyment);
