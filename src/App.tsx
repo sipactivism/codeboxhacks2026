@@ -15,6 +15,7 @@ const CATEGORY_SEARCH_TERMS: Partial<Record<BrowseCategory, string>> = {
   arts: "#art",
   culture: "#culture",
   fun: "#fun",
+  academic: "#academic",
 };
 
 function App() {

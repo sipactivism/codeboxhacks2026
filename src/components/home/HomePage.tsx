@@ -33,7 +33,7 @@ export function HomePage({
   const [majorPickerOpen, setMajorPickerOpen] = useState(false);
 
   function openCategory(category: BrowseCategory) {
-    if (category === "major-specific" || category === "academic") {
+    if (category === "major-specific") {
       setMajorPickerOpen(true);
       return;
     }
