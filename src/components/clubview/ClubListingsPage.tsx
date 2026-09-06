@@ -212,8 +212,7 @@ function ClubCard({
   club: Club;
   onSelect: (club: Club) => void;
 }) {
-  const communityLevel = commitmentFromAverage(club.communityCommitment);
-  const commitment = communityLevel ? COMMITMENT[communityLevel] : undefined;
+  const officialCommitment = COMMITMENT[club.commitment];
   const [showMajors, setShowMajors] = useState(false);
 
   const handleKeyDown = (event: KeyboardEvent<HTMLElement>) => {
@@ -238,20 +237,13 @@ function ClubCard({
           <h2 className="club-name">{club.name}</h2>
           <p className="club-description">{club.description}</p>
           <div className="club-tags">
-            {commitment && communityLevel ? (
-              <span
-                className={`commitment-pill commitment--${communityLevel}`}
-                title={`${commitment.label}, based on community reviews`}
-                aria-label={`Average community commitment: ${club.communityCommitment!.toFixed(1)} out of 5, ${commitment.label}`}
-              >
-                <span className="commitment-dot" aria-hidden="true" />
-                {commitment.label}
-              </span>
-            ) : (
-              <span className="commitment-pill commitment--unavailable">
-                No community commitment yet
-              </span>
-            )}
+            <span
+              className={`commitment-pill commitment--${club.commitment}`}
+              title={`${officialCommitment.label}, provided by the club`}
+            >
+              <span className="commitment-dot" aria-hidden="true" />
+              {officialCommitment.label}
+            </span>
             {club.tags.map((tag) => {
               if (!tag.includes("#"))
                 return (
@@ -288,7 +280,7 @@ function ClubCard({
 
       <div className="club-side">
         {club.rating !== undefined ? (
-          <div className="club-rating-block">
+          <div>
             <div
               className="club-rating"
               aria-label={`${club.rating.toFixed(1)} out of 4 stars`}
