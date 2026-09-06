@@ -217,6 +217,15 @@
   line-height: 1;
 }
 
+.clubratelogocolors{
+  margin: 0;
+  color: var(--cal-poly-green);
+  font-size: clamp(44px, 6vw, 64px);
+  line-height: 1;
+  letter-spacing: -0.055em;
+}
+
+
 .club-major { background: #e5edf0; }
 .club-tag { background: var(--clubs-chip); }
 .club-major-toggle {

@@ -182,7 +182,7 @@ function ClubCard({ club, onSelect }: { club: Club; onSelect: (club: Club) => vo
                 {club.communityCommitment!.toFixed(1)} / 5 · {commitment.label}
               </span>
             ) : <span className="commitment-pill commitment--unavailable">No community commitment yet</span>}
-            {club.tags.map((tag) => <span className="club-tag" key={tag}>{tag}</span>)}
+            {club.tags.map((tag) => {if (!tag.includes("#")) return (<span className="club-tag" key={tag}>{tag}</span>); return null; })}
             {club.majors.length > 0 && (
               <button
                 className="club-major-toggle"
@@ -315,6 +315,7 @@ export default function ClubListingsPage({
   return (
     <main className="clubs-page">
       <div className="clubs-title-row">
+        <h1 className="clubratelogocolors">Club<span style={{ color: "var(--cal-poly-gold)" }}>Rate</span></h1>
         <p className="clubs-count" aria-live="polite">
           {loading ? "Loading clubs…" : `${visibleClubs.length} ${visibleClubs.length === 1 ? "club" : "clubs"}${submittedQuery ? " found" : ""}`}
         </p>
