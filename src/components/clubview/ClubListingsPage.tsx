@@ -424,11 +424,8 @@ export default function ClubListingsPage({
           (b.rating ?? Number.POSITIVE_INFINITY)
         );
       if (sortMode === "commitment-desc")
-        return (b.communityCommitment ?? -1) - (a.communityCommitment ?? -1);
-      return (
-        (a.communityCommitment ?? Number.POSITIVE_INFINITY) -
-        (b.communityCommitment ?? Number.POSITIVE_INFINITY)
-      );
+        return COMMITMENT[b.commitment].rank - COMMITMENT[a.commitment].rank;
+      return COMMITMENT[a.commitment].rank - COMMITMENT[b.commitment].rank;
     });
   }, [clubs, filters, randomCategory, randomSeed, sortMode, submittedQuery]);
 
