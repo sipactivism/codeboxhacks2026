@@ -73,7 +73,7 @@
 .clubs-search input {
   width: 100%;
   height: 58px;
-  padding: 0 22px 0 54px;
+  padding: 0 22px 0 24px;
   border: 1.5px solid var(--clubs-line);
   border-radius: 17px;
   outline: none;
