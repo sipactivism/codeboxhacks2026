@@ -64,6 +64,7 @@ export function ClubDetail({ onBack, club }: ClubDetailProps) {
   const clubName = club?.name ?? "Cal Poly Robotics";
   const clubDescription = club?.description ?? "A hands-on community for students who want to design, build, and compete with robots together.";
   const clubTags = club?.tags ?? ["Engineering", "Robotics", "Build teams"];
+  const clubInitials = club?.initials ?? clubName.split(/\s+/).map((word) => word[0]).join("").slice(0, 4);
   const commitmentLevel = club?.commitment ?? "moderate";
   const commitmentInfo = commitmentDetails[commitmentLevel];
   const contactLinks = club?.contactLinks ?? [];
@@ -166,7 +167,13 @@ export function ClubDetail({ onBack, club }: ClubDetailProps) {
         </button>
 
         <section className="club-detail__hero" aria-labelledby="club-title">
-          <div className="club-detail__mark" aria-hidden="true">CR</div>
+          <div className="club-detail__mark">
+            {club?.logoUrl ? (
+              <img src={club.logoUrl} alt={club.logoAlt ?? `${clubName} logo`} />
+            ) : (
+              <span aria-hidden="true">{clubInitials}</span>
+            )}
+          </div>
           <div className="club-detail__headline">
             <h1 id="club-title">{clubName}</h1>
             <div className="club-detail__tags" aria-label="Club tags">

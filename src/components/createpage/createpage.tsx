@@ -1,4 +1,4 @@
-import { useContext, useRef, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import {
   ArrowLeft,
   AtSign,
@@ -35,6 +35,28 @@ const clubTypes = [
 ] as const;
 
 const CLUB_IMAGES_BUCKET = "club_icons";
+const DEFAULT_TAG_OPTIONS = [
+  "Academic",
+  "Arts",
+  "Business",
+  "Community service",
+  "Culture",
+  "Dance",
+  "Engineering",
+  "Environmental",
+  "Food",
+  "Gaming",
+  "Health",
+  "Music",
+  "Outdoors",
+  "Professional",
+  "Recreation",
+  "Social",
+  "Sports",
+  "Technology",
+  "Theater",
+  "Volunteer",
+];
 
 function CreatePage() {
   const pageContext = useContext(PageContext);
@@ -45,12 +67,14 @@ function CreatePage() {
   const [description, setDescription] = useState("");
   const [tags, setTags] = useState<string[]>(["Technology"]);
   const [tagText, setTagText] = useState("");
+  const [tagMenuOpen, setTagMenuOpen] = useState(false);
+  const [availableTags, setAvailableTags] = useState(DEFAULT_TAG_OPTIONS);
   const [majors, setMajors] = useState<string[]>([]);
   const [majorOpen, setMajorOpen] = useState(false);
   const [commitment, setCommitment] = useState(2);
   const [clubType, setClubType] = useState<string | null>(null);
-  const [created, setCreated] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [contactLinks, setContactLinks] = useState({
     instagram: "",
@@ -64,6 +88,33 @@ function CreatePage() {
     if (value && !tags.includes(value)) setTags([...tags, value]);
     setTagText("");
   };
+
+  const addAvailableTag = (tag: string) => {
+    setTags((currentTags) => currentTags.includes(tag) ? currentTags : [...currentTags, tag]);
+    setTagMenuOpen(false);
+  };
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadAvailableTags() {
+      const { data, error } = await supabase
+        .schema("public")
+        .from("clubs")
+        .select("tags")
+        .eq("approved", true);
+
+      if (!active || error) return;
+
+      const tagsFromClubs = (data ?? []).flatMap((club) =>
+        Array.isArray(club.tags) ? club.tags.filter((tag): tag is string => typeof tag === "string") : [],
+      );
+      setAvailableTags([...new Set([...DEFAULT_TAG_OPTIONS, ...tagsFromClubs])].sort((a, b) => a.localeCompare(b)));
+    }
+
+    void loadAvailableTags();
+    return () => { active = false; };
+  }, []);
 
   const createClub = async () => {
     const name = clubName.trim();
@@ -109,9 +160,6 @@ function CreatePage() {
         .getPublicUrl(filePath);
       imageUrl = data.publicUrl;
 
-      //TODO SEND THE USER TO THE CLUB PAGE FOR THAT CLUB
-      //TODO SEND THE USER TO THE CLUB PAGE FOR THAT CLUB
-      //TODO SEND THE USER TO THE CLUB PAGE FOR THAT CLUB
     }
 
     const { error: insertError } = await supabase
@@ -141,7 +189,7 @@ function CreatePage() {
       return;
     }
 
-    setCreated(true);
+    setSubmitted(true);
   };
 
   return (
@@ -239,40 +287,65 @@ function CreatePage() {
             <p className="hint">
               Help students find you. Add topics, interests, or disciplines.
             </p>
-            <div className="tagbox">
-              {tags.map((tag) => (
-                <button className="tag" key={tag}>
-                  {tag}
-                  <X
-                    size={14}
-                    onClick={() => setTags(tags.filter((item) => item !== tag))}
-                  />
-                </button>
-              ))}
-              <input
-                key="tag-input"
-                value={tagText}
-                onChange={(event) => setTagText(event.target.value)}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter") {
-                    event.preventDefault();
-                    addTag();
-                  }
+            <div className="tag-picker">
+              <div className="tagbox">
+                {tags.map((tag) => (
+                  <button className="tag" key={tag}>
+                    {tag}
+                    <X
+                      size={14}
+                      onClick={() => setTags(tags.filter((item) => item !== tag))}
+                    />
+                  </button>
+                ))}
+                <input
+                  key="tag-input"
+                  value={tagText}
+                  onChange={(event) => setTagText(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") {
+                      event.preventDefault();
+                      addTag();
+                    }
 
-                  if (
-                    event.key === "Backspace" &&
-                    tagText === "" &&
-                    tags.length > 0
-                  ) {
-                    event.preventDefault();
-                    setTags((currentTags) => currentTags.slice(0, -1));
-                  }
-                }}
-                placeholder="Add a tag"
-              />
-              <button className="add" onClick={addTag}>
-                <Plus size={17} />
-              </button>
+                    if (
+                      event.key === "Backspace" &&
+                      tagText === "" &&
+                      tags.length > 0
+                    ) {
+                      event.preventDefault();
+                      setTags((currentTags) => currentTags.slice(0, -1));
+                    }
+                  }}
+                  placeholder="Add a tag"
+                />
+                <button
+                  className="add"
+                  type="button"
+                  aria-label="Choose from available tags"
+                  aria-haspopup="listbox"
+                  aria-expanded={tagMenuOpen}
+                  onClick={() => setTagMenuOpen((open) => !open)}
+                >
+                  <Plus size={17} />
+                </button>
+              </div>
+              {tagMenuOpen && (
+                <div className="tag-menu" role="listbox" aria-label="Available tags">
+                  {availableTags.map((tag) => (
+                    <button
+                      type="button"
+                      role="option"
+                      key={tag}
+                      aria-selected={tags.includes(tag)}
+                      disabled={tags.includes(tag)}
+                      onClick={() => addAvailableTag(tag)}
+                    >
+                      {tag}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
           <div className="field">
@@ -476,16 +549,19 @@ function CreatePage() {
                   {error}
                 </p>
               )}
+              {submitted && (
+                <p className="form-success" role="status">
+                  Club submitted for approval. It will appear in ClubRate once approved.
+                </p>
+              )}
             </div>
             <button
               className="create"
-              disabled={submitting || created}
+              disabled={submitting || submitted}
               onClick={createClub}
             >
-              {created ? (
-                <>
-                  <Check size={18} /> Club created!
-                </>
+              {submitted ? (
+                <><Check size={18} /> Submitted for approval</>
               ) : submitting ? (
                 "Creating club…"
               ) : (
