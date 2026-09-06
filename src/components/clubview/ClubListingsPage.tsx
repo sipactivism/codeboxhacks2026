@@ -32,6 +32,7 @@ export interface Club {
 interface ClubListingsPageProps {
   filters: ClubFilters;
   onFiltersChange: (filters: ClubFilters) => void;
+  randomCategory?: boolean;
   onClubClick?: (club: Club) => void;
 }
 
@@ -181,6 +182,7 @@ function ClubCard({ club, onSelect }: { club: Club; onSelect: (club: Club) => vo
 export default function ClubListingsPage({
   filters,
   onFiltersChange,
+  randomCategory = false,
   onClubClick,
 }: ClubListingsPageProps) {
   const [clubs, setClubs] = useState<Club[]>([]);
@@ -226,14 +228,26 @@ export default function ClubListingsPage({
       if (error) {
         setLoadError(error.message);
       } else {
-        setClubs((data as ClubRow[]).map(clubFromRow));
+        const loadedClubs = (data as ClubRow[]).map(clubFromRow);
+        if (randomCategory) {
+          for (let index = loadedClubs.length - 1; index > 0; index -= 1) {
+            const randomIndex = Math.floor(Math.random() * (index + 1));
+            [loadedClubs[index], loadedClubs[randomIndex]] = [
+              loadedClubs[randomIndex],
+              loadedClubs[index],
+            ];
+          }
+          setClubs(loadedClubs.slice(0, 10));
+        } else {
+          setClubs(loadedClubs);
+        }
       }
       setLoading(false);
     }
 
     loadClubs();
     return () => { active = false; };
-  }, [submittedQuery]);
+  }, [randomCategory, submittedQuery]);
 
   const visibleClubs = useMemo(() => {
     const normalizedQuery = submittedQuery.trim().toLowerCase();

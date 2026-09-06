@@ -26,9 +26,15 @@ function PageContainer() {
     commitment: "all",
     minimumRating: 0,
   });
+  const [randomCategory, setRandomCategory] = useState(false);
 
-  function openCategory(_category: BrowseCategory, filters: ClubFilters) {
-    setFilters(filters);
+  function openCategory(category: BrowseCategory, currentFilters: ClubFilters) {
+    setRandomCategory(category === "random");
+    setFilters(
+      category === "random"
+        ? { ...currentFilters, query: "" }
+        : currentFilters,
+    );
     setPageNum(3);
   }
 
@@ -49,6 +55,7 @@ function PageContainer() {
         <ClubListingsPage
           filters={filters}
           onFiltersChange={setFilters}
+          randomCategory={randomCategory}
           onClubClick={(club) => {
             setSelectedClub(club);
             setPageNum(4);
