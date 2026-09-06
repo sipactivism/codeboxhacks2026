@@ -1,7 +1,7 @@
 .club-detail { min-height: 100vh; background: var(--background); }
 .club-detail__content { width: min(1120px, calc(100% - 48px)); margin: 0 auto; padding: 36px 0 64px; }
 .club-detail__hero { display: grid; grid-template-columns: auto 1fr auto; gap: 22px; align-items: center; margin: 28px 0 16px; }
-.club-detail__mark { display: grid; width: 92px; height: 92px; place-items: center; overflow: hidden; border-radius: 26px; background: var(--cal-poly-green); box-shadow: var(--shadow); color: #fff; font-size: 27px; font-weight: 800; letter-spacing: -0.08em; }.club-detail__mark img { width: 100%; height: 100%; object-fit: cover; }
+.club-detail__mark { display: grid; width: 92px; height: 92px; place-items: center; overflow: hidden; border-radius: 26px; background: transparent; box-shadow: var(--shadow); color: #fff; font-size: 27px; font-weight: 800; letter-spacing: -0.08em; }.club-detail__mark img { width: 100%; height: 100%; object-fit: cover; }
 .club-detail__eyebrow, .section-kicker { margin: 0 0 7px; color: var(--cal-poly-green); font-size: 11px; font-weight: 800; letter-spacing: .09em; }
 .club-detail__headline h1, .detail-card h2, .review-dialog h2 { margin: 0; color: var(--text); letter-spacing: -.045em; }
 .club-detail__headline h1 { font-size: clamp(34px, 5vw, 48px); line-height: 1; }

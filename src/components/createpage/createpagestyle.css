@@ -51,7 +51,7 @@ textarea { min-height: 104px; resize: vertical; line-height: 1.45; }
 .spectrum-card.chosen-card { box-shadow: 0 0 0 3px #294c3655; transform: translateY(-2px); }
 .spectrum-card b { display: block; padding-right: 13px; font-size: 12px; line-height: 1.1; }
 .spectrum-card small { display: block; margin-top: 7px; font-size: 9px; line-height: 1.15; }
-.mint { background: #e0edd9; }.yellow { background: #fff1c8; }.peach { background: #fde7d0; }.rose { background: #f5cfd0; }.coral { background: #ecc3ba; }
+.mint { background: #e0edd9 !important; }.yellow { background: #fff1c8 !important; }.peach { background: #fde7d0 !important; }.rose { background: #f5cfd0 !important; }.coral { background: #ecc3ba !important; }
 .radio { position: absolute; top: 9px; right: 9px; display: grid; width: 17px; height: 17px; place-items: center; border: 1px solid #77857a; border-radius: 50%; background: #fff; }
 .chosen-card .radio { border-color: #2e6244; background: #2e6244; color: #fff; }
 .club-types { display: grid; width: 100%; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 22px; }
