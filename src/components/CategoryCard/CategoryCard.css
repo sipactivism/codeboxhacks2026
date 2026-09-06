@@ -27,6 +27,7 @@
 .category-card--major-specific::before,
 .category-card--arts::before,
 .category-card--culture::before,
+.category-card--fun::before,
 .category-card--niche::before,
 .category-card--random::before {
   position: absolute;
@@ -63,6 +64,13 @@
   background-image:
     linear-gradient(rgba(14, 29, 21, 0.58), rgba(14, 29, 21, 0.58)),
     url("/images/culture-blue-hoodies.png");
+  background-position: center 42%;
+}
+
+.category-card--fun::before {
+  background-image:
+    linear-gradient(rgba(14, 29, 21, 0.58), rgba(14, 29, 21, 0.58)),
+    url("/images/fun-friends.png");
   background-position: center 42%;
 }
 
