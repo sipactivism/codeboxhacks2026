@@ -52,7 +52,7 @@ function ContactIcon({ platform }: { platform: ContactPlatform }) {
   if (platform === "discord") return <FaDiscord aria-hidden="true" />;
   if (platform === "groupme") return <SiGroupme aria-hidden="true" />;
   if (platform === "instagram") return <FaInstagram aria-hidden="true" />;
-  return <Globe2 aria-hidden="true" />;
+  return <Globe2 aria-hidden="true" height={12} width={12} />;
 }
 
 const CLUB_IMAGES_BUCKET = "club_icons";
@@ -218,12 +218,14 @@ function CreatePage() {
       <section className="layout">
         <div className="form-card">
           <div className="section-title">
-            <span className="step">01</span>
             <div>
               <h2>Basic information</h2>
             </div>
           </div>
           <div className="profile-row">
+            <div>
+              <label>Club image</label>
+            </div>
             <button
               className={"photo " + (!image ? "empty" : "")}
               onClick={() => inputRef.current?.click()}
@@ -253,15 +255,6 @@ function CreatePage() {
                 }
               }}
             />
-            <div>
-              <label>Club image</label>
-              <button
-                className="upload"
-                onClick={() => inputRef.current?.click()}
-              >
-                <Camera size={16} /> Upload image
-              </button>
-            </div>
           </div>
           <div className="field">
             <label>
@@ -275,7 +268,7 @@ function CreatePage() {
           </div>
           <div className="field">
             <label>
-              Short description <i>Required</i>
+              Short description <i>*</i>
             </label>
             <textarea
               value={description}
@@ -402,7 +395,6 @@ function CreatePage() {
             )}
           </div>
           <div className="section-title lower">
-            <span className="step">02</span>
             <div>
               <h2>What’s the commitment?</h2>
             </div>
@@ -429,7 +421,6 @@ function CreatePage() {
             </div>
           </div>
           <div className="section-title lower">
-            <span className="step">03</span>
             <div>
               <h2>Select the type of club</h2>
             </div>

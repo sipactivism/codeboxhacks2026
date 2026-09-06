@@ -27,6 +27,7 @@
   color: var(--cal-poly-green);
   font-size: 18px;
   font-weight: 750;
+  margin-top: 27px;
 }
 
 .app-header__back:hover {
