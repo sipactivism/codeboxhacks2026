@@ -44,16 +44,42 @@ body {
   transition: background-color 180ms ease, color 180ms ease;
 }
 
-/* Hide the grey browser scrollbar without disabling page scrolling. */
-html,
-body {
+html {
+  scrollbar-color: #aeb5b0 transparent;
+  scrollbar-width: thin;
+}
+
+html::-webkit-scrollbar {
+  width: 10px;
+}
+
+html::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+html::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background: #aeb5b0;
+  background-clip: padding-box;
+}
+
+html.home-page-active,
+html.home-page-active body {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
 
-html::-webkit-scrollbar,
-body::-webkit-scrollbar {
+html.home-page-active::-webkit-scrollbar,
+html.home-page-active body::-webkit-scrollbar {
   display: none;
+}
+
+html.home-page--no-scroll,
+html.home-page--no-scroll body {
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
 }
 
 button,

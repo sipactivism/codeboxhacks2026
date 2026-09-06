@@ -1,4 +1,4 @@
-import { useCallback, useContext, useEffect, useRef, useState } from "react";
+import { useCallback, useContext, useEffect, useState } from "react";
 
 import { AppHeader } from "./components/AppHeader/AppHeader";
 import { ClubDetail } from "./components/ClubDetail/ClubDetail";
@@ -31,7 +31,7 @@ export default App;
 
 function PageContainer() {
   const { pageNum, setPageNum } = useContext(PageContext);
-  const pageHistory = useRef<number[]>([]);
+  const [pageHistory, setPageHistory] = useState<number[]>([]);
   const [selectedClub, setSelectedClub] = useState<Club | null>(null);
   const [filters, setFilters] = useState<ClubFilters>({
     query: "",
@@ -47,13 +47,15 @@ function PageContainer() {
   }, []);
 
   const navigateTo = useCallback((nextPage: number) => {
-    pageHistory.current.push(pageNum);
+    setPageHistory((history) => [...history, pageNum]);
     setPageNum(nextPage);
-  }, [pageNum, setPageNum]);
+  }, [pageNum, setPageHistory, setPageNum]);
 
   const goBack = useCallback(() => {
-    setPageNum(pageHistory.current.pop() ?? 1);
-  }, [setPageNum]);
+    const previousPage = pageHistory.at(-1) ?? 1;
+    setPageHistory((history) => history.slice(0, -1));
+    setPageNum(previousPage);
+  }, [pageHistory, setPageHistory, setPageNum]);
 
   function openCategory(category: BrowseCategory, currentFilters: ClubFilters) {
     setRandomCategory(false);
@@ -140,7 +142,7 @@ function PageContainer() {
 
   return (
     <>
-      <AppHeader canGoBack={pageNum !== 1 && pageHistory.current.length > 0} onBack={goBack} />
+      <AppHeader canGoBack={pageNum !== 1} onBack={goBack} />
       {page}
       <RandomizeButton onClick={randomizeClubs} />
     </>

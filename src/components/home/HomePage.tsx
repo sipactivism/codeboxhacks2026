@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { CategoryCard } from "../CategoryCard/CategoryCard";
 import { SearchFilter } from "../SearchFilter/SearchFilter";
@@ -31,6 +31,36 @@ export function HomePage({
   onCreateClub,
 }: HomePageProps) {
   const [majorPickerOpen, setMajorPickerOpen] = useState(false);
+
+  useEffect(() => {
+    const pageRoot = document.documentElement;
+
+    function updateHomePageScrolling() {
+      const isMobile = window.matchMedia(
+        "(max-width: 800px), (pointer: coarse)",
+      ).matches;
+      const isBrowserFullscreen = Boolean(document.fullscreenElement);
+      const fillsAvailableScreen =
+        window.outerWidth >= window.screen.availWidth - 24 &&
+        window.outerHeight >= window.screen.availHeight - 24;
+
+      pageRoot.classList.toggle(
+        "home-page--no-scroll",
+        !isMobile && (isBrowserFullscreen || fillsAvailableScreen),
+      );
+    }
+
+    pageRoot.classList.add("home-page-active");
+    updateHomePageScrolling();
+    window.addEventListener("resize", updateHomePageScrolling);
+    document.addEventListener("fullscreenchange", updateHomePageScrolling);
+
+    return () => {
+      window.removeEventListener("resize", updateHomePageScrolling);
+      document.removeEventListener("fullscreenchange", updateHomePageScrolling);
+      pageRoot.classList.remove("home-page-active", "home-page--no-scroll");
+    };
+  }, []);
 
   function openCategory(category: BrowseCategory) {
     if (category === "major-specific") {
