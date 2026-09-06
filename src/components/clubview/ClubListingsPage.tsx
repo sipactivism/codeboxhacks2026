@@ -147,7 +147,6 @@ function ClubCard({ club, onSelect }: { club: Club; onSelect: (club: Club) => vo
         <ClubLogo club={club} />
         <div className="club-copy">
           <h2 className="club-name">{club.name}</h2>
-          <p className="club-meta">{club.category}</p>
           <p className="club-description">{club.description}</p>
           <div className="club-tags">
             <span className={`commitment-pill commitment--${club.commitment}`} title={commitment.detail}>
