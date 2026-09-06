@@ -21,9 +21,14 @@ export default App;
 function PageContainer() {
   const { pageNum, setPageNum } = useContext(PageContext);
   const [selectedClub, setSelectedClub] = useState<Club | null>(null);
+  const [filters, setFilters] = useState<ClubFilters>({
+    query: "",
+    commitment: "all",
+    minimumRating: 0,
+  });
 
-  function openCategory(category: BrowseCategory, filters: ClubFilters) {
-    console.log(category, filters);
+  function openCategory(_category: BrowseCategory, filters: ClubFilters) {
+    setFilters(filters);
     setPageNum(3);
   }
 
@@ -31,6 +36,8 @@ function PageContainer() {
     case 1:
       return (
         <HomePage
+          filters={filters}
+          onFiltersChange={setFilters}
           onOpenCategory={openCategory}
           onCreateClub={() => setPageNum(2)}
         />
@@ -40,6 +47,8 @@ function PageContainer() {
     case 3:
       return (
         <ClubListingsPage
+          filters={filters}
+          onFiltersChange={setFilters}
           onClubClick={(club) => {
             setSelectedClub(club);
             setPageNum(4);
@@ -51,6 +60,8 @@ function PageContainer() {
     default:
       return (
         <HomePage
+          filters={filters}
+          onFiltersChange={setFilters}
           onOpenCategory={openCategory}
           onCreateClub={() => setPageNum(2)}
         />

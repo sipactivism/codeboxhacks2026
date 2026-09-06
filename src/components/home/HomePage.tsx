@@ -1,5 +1,3 @@
-import { useState } from "react";
-
 import { CategoryCard } from "../CategoryCard/CategoryCard";
 import { SearchFilter } from "../SearchFilter/SearchFilter";
 import { TopRatedCard } from "../TopRatedCard/TopRatedCard";
@@ -14,6 +12,8 @@ import type {
 import "./HomePage.css";
 
 type HomePageProps = {
+  filters: ClubFilters;
+  onFiltersChange: (filters: ClubFilters) => void;
   onOpenCategory: (
     category: BrowseCategory,
     filters: ClubFilters,
@@ -22,15 +22,11 @@ type HomePageProps = {
 };
 
 export function HomePage({
+  filters,
+  onFiltersChange,
   onOpenCategory,
   onCreateClub,
 }: HomePageProps) {
-  const [filters, setFilters] = useState<ClubFilters>({
-    query: "",
-    commitment: "all",
-    minimumRating: 0,
-  });
-
   return (
     <main className="home-page">
       <section className="home-page__content">
@@ -44,7 +40,7 @@ export function HomePage({
 
         <SearchFilter
           filters={filters}
-          onChange={setFilters}
+          onChange={onFiltersChange}
           onSubmit={() =>
             onOpenCategory("top-rated", filters)
           }

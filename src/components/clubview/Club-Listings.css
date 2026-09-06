@@ -233,7 +233,7 @@
 .commitment--low { color: #735815; background: #fff0c8; }
 .commitment--moderate { color: #8a5521; background: #fce3cf; }
 .commitment--high { color: #8a3940; background: #f4ced0; }
-.commitment--serious { color: #451812; background: #d98070; }
+.commitment--serious { color: #451812; background: #f7ac9e; }
 
 .club-side {
   display: flex;
