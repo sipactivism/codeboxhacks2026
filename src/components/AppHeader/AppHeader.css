@@ -22,16 +22,19 @@
   padding: 9px 14px;
   border: 1px solid var(--border);
   border-radius: 12px;
-  background: var(--surface);
+  background: transparent;
+  border: none !important;
   color: var(--cal-poly-green);
-  font-size: 14px;
+  font-size: 18px;
   font-weight: 750;
 }
 
 .app-header__back:hover {
-  border-color: var(--cal-poly-green);
+  /*text-decoration: underline;*/
+  color: var(--cal-poly-green-active)
+  /*border-color: var(--cal-poly-green);
   box-shadow: var(--shadow);
-  transform: translateY(-1px);
+  transform: translateY(-1px);*/
 }
 
 .app-header__back:focus-visible {

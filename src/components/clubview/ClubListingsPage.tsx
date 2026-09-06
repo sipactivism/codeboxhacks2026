@@ -245,7 +245,7 @@ function ClubCard({
                 aria-label={`Average community commitment: ${club.communityCommitment!.toFixed(1)} out of 5, ${commitment.label}`}
               >
                 <span className="commitment-dot" aria-hidden="true" />
-                {club.communityCommitment!.toFixed(1)} / 5 · {commitment.label}
+                {commitment.label}
               </span>
             ) : (
               <span className="commitment-pill commitment--unavailable">

@@ -15,7 +15,7 @@ export function AppHeader({ canGoBack, onBack }: AppHeaderProps) {
         </div>
         {canGoBack && (
           <button className="app-header__back" type="button" onClick={onBack}>
-            Back
+            ← Back
           </button>
         )}
       </div>
