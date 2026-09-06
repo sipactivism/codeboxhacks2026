@@ -15,7 +15,7 @@ import {
 import { FaDiscord, FaInstagram } from "react-icons/fa";
 import { SiGroupme } from "react-icons/si";
 import type { Club } from "../clubview/ClubListingsPage";
-
+import { supabase } from "../../utils/supabase";
 import "./ClubDetail.css";
 
 type ClubDetailProps = {
@@ -38,40 +38,19 @@ const commitmentDetails = {
   serious: { label: "Serious commitment", detail: "6+ hours each week" },
 };
 
-type SubmittedReview = {
-  id: string;
-  authorId?: string;
-  date: string;
-  dateTime: string;
+type Review = {
+  id: number;
+  created_at: string;
+  name: string | null;
+  rating: number;
+  review: string | null;
+  club_id: number;
   commitment: number;
-  enjoyment: number;
-  body: string;
 };
 
+type NewReview = Omit<Review, "id" | "created_at">;
+
 const commitmentLabels = ["Low", "Light", "Moderate", "High", "Serious"];
-const reviewerStorageKey = "clubrate:anonymous-reviewer-id";
-
-function getCurrentReviewerId() {
-  try {
-    const existingId = localStorage.getItem(reviewerStorageKey);
-    if (existingId) return existingId;
-
-    const reviewerId = crypto.randomUUID();
-    localStorage.setItem(reviewerStorageKey, reviewerId);
-    return reviewerId;
-  } catch {
-    return "anonymous-reviewer";
-  }
-}
-
-function loadSubmittedReviews(storageKey: string): SubmittedReview[] {
-  try {
-    const savedReviews = localStorage.getItem(storageKey);
-    return savedReviews ? JSON.parse(savedReviews) : [];
-  } catch {
-    return [];
-  }
-}
 
 export function ClubDetail({ onBack, club }: ClubDetailProps) {
   const [reviewOpen, setReviewOpen] = useState(false);
@@ -79,47 +58,51 @@ export function ClubDetail({ onBack, club }: ClubDetailProps) {
   const [enjoyment, setEnjoyment] = useState(0);
   const [comment, setComment] = useState("");
   const [reviewError, setReviewError] = useState<string | null>(null);
-  const [editingReviewId, setEditingReviewId] = useState<string | null>(null);
-  const [currentReviewerId] = useState(getCurrentReviewerId);
+  const [reviewList, setReviewList] = useState<Review[]>([]);
+  const [newReview, setNewReview] = useState<NewReview | "">("");
+  const [isPostingReview, setIsPostingReview] = useState(false);
   const clubName = club?.name ?? "Cal Poly Robotics";
   const clubDescription = club?.description ?? "A hands-on community for students who want to design, build, and compete with robots together.";
   const clubTags = club?.tags ?? ["Engineering", "Robotics", "Build teams"];
   const commitmentLevel = club?.commitment ?? "moderate";
   const commitmentInfo = commitmentDetails[commitmentLevel];
   const contactLinks = club?.contactLinks ?? [];
-  const reviewStorageKey = `clubrate:reviews:${club?.id ?? "cal-poly-robotics"}`;
-  const [submittedReviews, setSubmittedReviews] = useState<SubmittedReview[]>(() =>
-    loadSubmittedReviews(reviewStorageKey),
-  );
+  const parsedClubId = Number(club?.id);
+  const clubId = Number.isInteger(parsedClubId) ? parsedClubId : null;
 
   useEffect(() => {
-    const savedReviews = loadSubmittedReviews(reviewStorageKey);
-    // Reviews created before ownership was added belong to this local browser.
-    const ownedReviews = savedReviews.map((review) =>
-      review.authorId ? review : { ...review, authorId: currentReviewerId },
-    );
-    setSubmittedReviews(ownedReviews);
-    if (ownedReviews.some((review, index) => review.authorId !== savedReviews[index].authorId)) {
-      localStorage.setItem(reviewStorageKey, JSON.stringify(ownedReviews));
+    let active = true;
+
+    async function loadReviews() {
+      if (clubId === null) {
+        setReviewList([]);
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from("ratings")
+        .select("id, created_at, name, rating, review, club_id, commitment")
+        .eq("club_id", clubId)
+        .order("created_at", { ascending: false });
+
+      if (!active) return;
+      if (error) {
+        setReviewError("Reviews could not be loaded right now.");
+        return;
+      }
+      setReviewList((data ?? []) as Review[]);
     }
-  }, [currentReviewerId, reviewStorageKey]);
+
+    void loadReviews();
+    return () => { active = false; };
+  }, [clubId]);
 
   function closeReviewDialog() {
     setReviewOpen(false);
     setReviewError(null);
-    setEditingReviewId(null);
     setCommitment(3);
     setEnjoyment(0);
     setComment("");
-  }
-
-  function saveReviews(nextReviews: SubmittedReview[]) {
-    setSubmittedReviews(nextReviews);
-    try {
-      localStorage.setItem(reviewStorageKey, JSON.stringify(nextReviews));
-    } catch {
-      // The review remains visible for this visit if browser storage is unavailable.
-    }
   }
 
   function openNewReviewDialog() {
@@ -127,26 +110,14 @@ export function ClubDetail({ onBack, club }: ClubDetailProps) {
     setReviewOpen(true);
   }
 
-  function editReview(review: SubmittedReview) {
-    if (review.authorId !== currentReviewerId) return;
-    setEditingReviewId(review.id);
-    setCommitment(review.commitment);
-    setEnjoyment(review.enjoyment);
-    setComment(review.body);
-    setReviewError(null);
-    setReviewOpen(true);
-  }
-
-  function deleteReview(reviewId: string) {
-    const review = submittedReviews.find((item) => item.id === reviewId);
-    if (!review || review.authorId !== currentReviewerId) return;
-    if (!window.confirm("Delete this review?")) return;
-    saveReviews(submittedReviews.filter((review) => review.id !== reviewId));
-  }
-
-  function submitReview() {
+  async function addReview() {
     const note = comment.trim();
 
+    if (newReview || isPostingReview) return;
+    if (clubId === null) {
+      setReviewError("Choose a club before posting a review.");
+      return;
+    }
     if (enjoyment === 0) {
       setReviewError("Choose a star rating before posting your review.");
       return;
@@ -157,24 +128,33 @@ export function ClubDetail({ onBack, club }: ClubDetailProps) {
       return;
     }
 
-    const existingReview = submittedReviews.find((review) => review.id === editingReviewId);
-    const now = new Date();
-    const savedReview: SubmittedReview = existingReview
-      ? { ...existingReview, commitment, enjoyment, body: note }
-      : {
-          id: crypto.randomUUID(),
-          authorId: currentReviewerId,
-          date: now.toLocaleDateString(undefined, { month: "long", day: "numeric", year: "numeric" }),
-          dateTime: now.toISOString(),
-          commitment,
-          enjoyment,
-          body: note,
-        };
-    const nextReviews = existingReview
-      ? submittedReviews.map((review) => review.id === savedReview.id ? savedReview : review)
-      : [savedReview, ...submittedReviews];
+    const newReviewData: NewReview = {
+      name: "Anonymous",
+      rating: enjoyment,
+      review: note,
+      club_id: clubId,
+      commitment,
+    };
 
-    saveReviews(nextReviews);
+    setNewReview(newReviewData);
+    setIsPostingReview(true);
+    setReviewError(null);
+
+    const { data, error } = await supabase
+      .from("ratings")
+      .insert(newReviewData)
+      .select("id, created_at, name, rating, review, club_id, commitment")
+      .single();
+
+    setIsPostingReview(false);
+    setNewReview("");
+
+    if (error) {
+      setReviewError(error.message);
+      return;
+    }
+
+    setReviewList((previousReviews) => [data as Review, ...previousReviews]);
     closeReviewDialog();
   }
 
@@ -294,25 +274,19 @@ export function ClubDetail({ onBack, club }: ClubDetailProps) {
               <div><h2>Reviews</h2></div>
               <MessageCircle size={21} aria-hidden="true" />
             </div>
-            {submittedReviews.length === 0 ? (
+            {reviewList.length === 0 ? (
               <p className="club-detail__no-reviews">No reviews yet. Be the first to share your experience.</p>
-            ) : submittedReviews.map((review, index) => (
+            ) : reviewList.map((review, index) => (
               <article className="club-detail__comment" key={review.id}>
-                <span className={`club-detail__avatar${index === 1 ? " club-detail__avatar--gold" : ""}`} aria-hidden="true"><CircleUserRound size={21} /></span>
+                <span className={`club-detail__avatar${index % 2 ? " club-detail__avatar--gold" : ""}`} aria-hidden="true"><CircleUserRound size={21} /></span>
                 <div>
                   <div className="club-detail__review-meta">
-                    <b>Anonymous</b>
+                    <b>{review.name?.trim() || "Anonymous"}</b>
                     <span>{commitmentLabels[review.commitment - 1]} commitment</span>
-                    <span aria-label={`${review.enjoyment} out of 4 stars`}>{"★".repeat(review.enjoyment)}</span>
-                    <time dateTime={review.dateTime}>{review.date}</time>
+                    <span aria-label={`${review.rating} out of 4 stars`}>{"★".repeat(review.rating)}</span>
+                    <time dateTime={review.created_at}>{new Date(review.created_at).toLocaleDateString(undefined, { month: "long", day: "numeric", year: "numeric" })}</time>
                   </div>
-                  <p>{review.body}</p>
-                  {review.authorId === currentReviewerId && (
-                    <div className="club-detail__review-actions">
-                      <button type="button" onClick={() => editReview(review)}>Edit</button>
-                      <button type="button" onClick={() => deleteReview(review.id)}>Delete</button>
-                    </div>
-                  )}
+                  {review.review && <p>{review.review}</p>}
                 </div>
               </article>
             ))}
@@ -323,12 +297,12 @@ export function ClubDetail({ onBack, club }: ClubDetailProps) {
       {reviewOpen && (
         <div className="review-dialog-backdrop" role="presentation" onMouseDown={closeReviewDialog}>
           <section className="review-dialog" role="dialog" aria-modal="true" aria-labelledby="review-title" onMouseDown={(event) => event.stopPropagation()}>
-            <h2 id="review-title">{editingReviewId ? "Edit" : "Review"} {clubName}</h2>
-            <label>Weekly commitment <b>{commitmentLabels[commitment - 1]}</b><input type="range" min="1" max="5" value={commitment} onChange={(event) => setCommitment(Number(event.target.value))} /></label>
-            <fieldset><legend>How much did you enjoy it?</legend><div className="review-dialog__stars">{[1, 2, 3, 4].map((rating) => <button type="button" key={rating} aria-label={`${rating} stars`} onClick={() => setEnjoyment(rating)}><Star fill={rating <= enjoyment ? "currentColor" : "none"} /></button>)}</div></fieldset>
-            <label>Leave a note<textarea value={comment} onChange={(event) => setComment(event.target.value)} placeholder="What should other students know?" /></label>
+            <h2 id="review-title">Review {clubName}</h2>
+            <label>Weekly commitment <b>{commitmentLabels[commitment - 1]}</b><input type="range" min="1" max="5" value={commitment} disabled={isPostingReview} onChange={(event) => setCommitment(Number(event.target.value))} /></label>
+            <fieldset><legend>How much did you enjoy it?</legend><div className="review-dialog__stars">{[1, 2, 3, 4].map((rating) => <button type="button" key={rating} aria-label={`${rating} stars`} disabled={isPostingReview} onClick={() => setEnjoyment(rating)}><Star fill={rating <= enjoyment ? "currentColor" : "none"} /></button>)}</div></fieldset>
+            <label>Leave a note<textarea value={comment} disabled={isPostingReview} onChange={(event) => setComment(event.target.value)} placeholder="What should other students know?" /></label>
             {reviewError && <p role="alert">{reviewError}</p>}
-            <div className="review-dialog__actions"><button type="button" onClick={closeReviewDialog}>Cancel</button><button type="button" className="review-dialog__submit" onClick={submitReview}>{editingReviewId ? "Save changes" : "Post review"}</button></div>
+            <div className="review-dialog__actions"><button type="button" disabled={isPostingReview} onClick={closeReviewDialog}>Cancel</button><button type="button" className="review-dialog__submit" disabled={isPostingReview} onClick={() => void addReview()}>{isPostingReview ? "Posting…" : "Post review"}</button></div>
           </section>
         </div>
       )}
