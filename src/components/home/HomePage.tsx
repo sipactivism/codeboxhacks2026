@@ -49,14 +49,6 @@ export function HomePage({
   return (
     <main className="home-page">
       <section className="home-page__content">
-        <header className="home-page__heading">
-          <h1>
-            Club<span>Rate</span>
-          </h1>
-
-          <p>A brand new way to view and rate clubs.</p>
-        </header>
-
         <SearchFilter
           filters={filters}
           onChange={onFiltersChange}
@@ -85,12 +77,13 @@ export function HomePage({
         </section>
 
         <div className="home-page__create">
+          <p className="home-page__create-prompt">Don't see your club here?</p>
           <button
             type="button"
             onClick={onCreateClub}
           >
             <span aria-hidden="true">＋</span>
-            Add your club
+            Add a club
           </button>
         </div>
       </section>

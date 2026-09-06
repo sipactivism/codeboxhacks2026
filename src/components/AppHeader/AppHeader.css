@@ -1,0 +1,72 @@
+@import url("https://fonts.googleapis.com/css2?family=Fraunces:wght@700&display=swap");
+
+.app-header {
+  position: sticky;
+  z-index: 30;
+  top: 0;
+  background: var(--header-surface);
+  backdrop-filter: blur(12px);
+}
+
+.app-header__content {
+  position: relative;
+  display: flex;
+  width: min(1120px, calc(100% - 48px));
+  min-height: 88px;
+  align-items: center;
+  padding-top: 20px;
+  margin: 0 auto;
+}
+
+.app-header__back {
+  padding: 9px 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--cal-poly-green);
+  font-size: 14px;
+  font-weight: 750;
+}
+
+.app-header__back:hover {
+  border-color: var(--cal-poly-green);
+  box-shadow: var(--shadow);
+  transform: translateY(-1px);
+}
+
+.app-header__back:focus-visible {
+  outline: 3px solid rgba(198, 146, 20, 0.7);
+  outline-offset: 3px;
+}
+
+.app-header__brand {
+  position: absolute;
+  top: calc(50% + 10px);
+  left: 50%;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 0;
+  border: 0;
+  border-radius: 10px;
+  color: var(--cal-poly-green);
+  background: transparent;
+  font-family: Fraunces, serif;
+  font-size: 42px;
+  font-weight: 700;
+  letter-spacing: -0.05em;
+  line-height: 1;
+  transform: translate(-50%, -50%);
+}
+
+.app-header__brand span span {
+  color: var(--cal-poly-gold);
+}
+
+@media (max-width: 560px) {
+  .app-header__content {
+    width: calc(100% - 32px);
+    min-height: 80px;
+  }
+
+}

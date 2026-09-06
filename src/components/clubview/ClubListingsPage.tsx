@@ -1,9 +1,10 @@
-import { useContext, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { KeyboardEvent } from "react";
 import { MoreHorizontal } from "lucide-react";
-import { supabase } from "../../utils/supabase";
+import { getApprovedClubRows } from "../../utils/approvedClubs";
+import type { ApprovedClubRow } from "../../utils/approvedClubs";
+import { RatingStars } from "../RatingStars/RatingStars";
 import "./Club-Listings.css";
-import { PageContext } from "../../PageContext";
 import type { ClubFilters } from "../../types/clubs";
 
 export type CommitmentLevel = "none" | "low" | "moderate" | "high" | "serious";
@@ -19,6 +20,8 @@ export interface Club {
   description: string;
   rating?: number;
   reviewCount?: number;
+  communityCommitment?: number;
+  communityCommitmentCount?: number;
   commitment: CommitmentLevel;
   tags: string[];
   majors: string[];
@@ -63,16 +66,6 @@ const SORT_OPTIONS: { value: SortMode; label: string }[] = [
   { value: "commitment-asc", label: "Lowest commitment" },
 ];
 
-type ClubRow = {
-  id: number;
-  name: string;
-  description: string;
-  image: string | null;
-  club_statistics: Record<string, unknown> | null;
-  tags: string[] | null;
-  contact_links: unknown;
-};
-
 const CONTACT_PLATFORMS = ["instagram", "discord", "groupme", "website"] as const;
 
 function commitmentFrom(value: unknown): CommitmentLevel {
@@ -88,6 +81,11 @@ function optionalNumber(value: unknown) {
   return typeof value === "number" && Number.isFinite(value) ? value : undefined;
 }
 
+function commitmentFromAverage(value: number | undefined): CommitmentLevel | undefined {
+  if (value === undefined || !Number.isFinite(value)) return undefined;
+  return (["none", "low", "moderate", "high", "serious"] as CommitmentLevel[])[Math.max(0, Math.min(4, Math.round(value) - 1))];
+}
+
 function contactLinksFrom(value: unknown): NonNullable<Club["contactLinks"]> {
   if (!Array.isArray(value)) return [];
   return value.flatMap((link) => {
@@ -98,7 +96,25 @@ function contactLinksFrom(value: unknown): NonNullable<Club["contactLinks"]> {
   });
 }
 
-export function clubFromRow(row: ClubRow): Club {
+function shuffledClubs(clubs: Club[], seed: number) {
+  const randomized = [...clubs];
+  let state = (seed || 1) >>> 0;
+  const nextRandom = () => {
+    state = (state * 1664525 + 1013904223) >>> 0;
+    return state / 4294967296;
+  };
+
+  for (let index = randomized.length - 1; index > 0; index -= 1) {
+    const randomIndex = Math.floor(nextRandom() * (index + 1));
+    [randomized[index], randomized[randomIndex]] = [
+      randomized[randomIndex],
+      randomized[index],
+    ];
+  }
+  return randomized.slice(0, 10);
+}
+
+export function clubFromRow(row: ApprovedClubRow): Club {
   const stats = row.club_statistics ?? {};
   return {
     id: String(row.id),
@@ -106,9 +122,11 @@ export function clubFromRow(row: ClubRow): Club {
     name: row.name,
     category: row.tags?.[0] ?? "Campus club",
     description: row.description,
-    rating: optionalNumber(stats.enjoyment_rating ?? stats.rating),
-    reviewCount: optionalNumber(stats.review_count),
+    rating: optionalNumber(row.rating),
+    reviewCount: optionalNumber(row.review_count ?? stats.review_count),
     commitment: commitmentFrom(stats.commitment_level),
+    communityCommitment: optionalNumber(row.community_commitment),
+    communityCommitmentCount: optionalNumber(row.community_commitment_count),
     tags: row.tags ?? [],
     majors: Array.isArray(stats.majors)
       ? stats.majors.filter((major): major is string => typeof major === "string")
@@ -132,7 +150,8 @@ function ClubLogo({ club }: { club: Club }) {
 }
 
 function ClubCard({ club, onSelect }: { club: Club; onSelect: (club: Club) => void }) {
-  const commitment = COMMITMENT[club.commitment];
+  const communityLevel = commitmentFromAverage(club.communityCommitment);
+  const commitment = communityLevel ? COMMITMENT[communityLevel] : undefined;
   const [showMajors, setShowMajors] = useState(false);
 
   const handleKeyDown = (event: KeyboardEvent<HTMLElement>) => {
@@ -157,10 +176,12 @@ function ClubCard({ club, onSelect }: { club: Club; onSelect: (club: Club) => vo
           <h2 className="club-name">{club.name}</h2>
           <p className="club-description">{club.description}</p>
           <div className="club-tags">
-            <span className={`commitment-pill commitment--${club.commitment}`} title={commitment.detail}>
-              <span className="commitment-dot" aria-hidden="true" />
-              {commitment.label}
-            </span>
+            {commitment && communityLevel ? (
+              <span className={`commitment-pill commitment--${communityLevel}`} title={`${commitment.label}, based on community reviews`} aria-label={`Average community commitment: ${club.communityCommitment!.toFixed(1)} out of 5, ${commitment.label}`}>
+                <span className="commitment-dot" aria-hidden="true" />
+                {club.communityCommitment!.toFixed(1)} / 5 · {commitment.label}
+              </span>
+            ) : <span className="commitment-pill commitment--unavailable">No community commitment yet</span>}
             {club.tags.map((tag) => <span className="club-tag" key={tag}>{tag}</span>)}
             {club.majors.length > 0 && (
               <button
@@ -186,13 +207,14 @@ function ClubCard({ club, onSelect }: { club: Club; onSelect: (club: Club) => vo
         {club.rating !== undefined ? (
           <div className="club-rating-block">
             <div className="club-rating" aria-label={`${club.rating.toFixed(1)} out of 4 stars`}>
-              <span>{club.rating.toFixed(1)}</span><span className="club-star" aria-hidden="true">★</span>
+              <RatingStars value={club.rating} size={18} label={`${club.rating.toFixed(1)} out of 4 stars`} />
+              <span>{club.rating.toFixed(1)}</span>
             </div>
             <div
               className="club-reviews"
               aria-label={`${club.rating.toFixed(1)} out of 4 stars${club.reviewCount !== undefined ? ` from ${club.reviewCount} reviews` : ""}`}
             >
-              ★★★★
+              {club.reviewCount === 1 ? "1 review" : `${club.reviewCount ?? 0} reviews`}
             </div>
           </div>
         ) : <span className="club-rating-unavailable">No ratings yet</span>}
@@ -229,51 +251,21 @@ export default function ClubListingsPage({
     let active = true;
 
     async function loadClubs() {
-      const activeQuery = randomCategory ? "" : submittedQuery;
-      const searchTerm = activeQuery
-        .trim()
-        .replace(/[^a-zA-Z0-9\s_#-]/g, " ")
-        .replace(/\s+/g, " ")
-        .toLowerCase();
-      let query = supabase
-        .schema("public")
-        .from("clubs")
-        .select("id, name, description, image, club_statistics, tags, contact_links")
-        .eq("approved", true)
-        .order("created_at", { ascending: false });
-
-      if (searchTerm) {
-        query = query.or(
-          `name.ilike.*${searchTerm}*,description.ilike.*${searchTerm}*,tags.cs.{${searchTerm}},club_statistics->>commitment_level.ilike.*${searchTerm}*,club_statistics->>majors.ilike.*${searchTerm}*`,
-        );
+      try {
+        const loadedClubs = (await getApprovedClubRows()).map(clubFromRow);
+        if (!active) return;
+        setClubs(loadedClubs);
+        setLoadError(null);
+      } catch (error) {
+        if (!active) return;
+        setLoadError(error instanceof Error ? error.message : "An unexpected error occurred.");
       }
-
-      const { data, error } = await query;
-
-      if (!active) return;
-      if (error) {
-        setLoadError(error.message);
-      } else {
-        const loadedClubs = (data as ClubRow[]).map(clubFromRow);
-        if (randomCategory) {
-          for (let index = loadedClubs.length - 1; index > 0; index -= 1) {
-            const randomIndex = Math.floor(Math.random() * (index + 1));
-            [loadedClubs[index], loadedClubs[randomIndex]] = [
-              loadedClubs[randomIndex],
-              loadedClubs[index],
-            ];
-          }
-          setClubs(loadedClubs.slice(0, 10));
-        } else {
-          setClubs(loadedClubs);
-        }
-      }
-      setLoading(false);
+      if (active) setLoading(false);
     }
 
     loadClubs();
     return () => { active = false; };
-  }, [randomCategory, randomSeed, submittedQuery]);
+  }, []);
 
   const visibleClubs = useMemo(() => {
     const normalizedQuery = (randomCategory ? "" : submittedQuery).trim().toLowerCase();
@@ -285,7 +277,7 @@ export default function ClubListingsPage({
             ...club.tags,
             ...club.majors,
             club.commitment,
-            COMMITMENT[club.commitment].label,
+            ...(club.communityCommitment !== undefined && commitmentFromAverage(club.communityCommitment) ? [COMMITMENT[commitmentFromAverage(club.communityCommitment)!].label, String(club.communityCommitment)] : []),
           ];
 
           return searchableFields.some((field) =>
@@ -294,12 +286,16 @@ export default function ClubListingsPage({
         })
       : [...clubs];
 
+    const randomized = randomCategory ? shuffledClubs(filtered, randomSeed) : filtered;
+
     const commitmentFiltered = filters.commitment === "all"
-      ? filtered
-      : filtered.filter((club) => {
-          if (filters.commitment === "low") return club.commitment === "none" || club.commitment === "low";
-          if (filters.commitment === "medium") return club.commitment === "moderate";
-          return club.commitment === "high" || club.commitment === "serious";
+      ? randomized
+      : randomized.filter((club) => {
+          const communityLevel = commitmentFromAverage(club.communityCommitment);
+          if (!communityLevel) return false;
+          if (filters.commitment === "low") return communityLevel === "none" || communityLevel === "low";
+          if (filters.commitment === "medium") return communityLevel === "moderate";
+          return communityLevel === "high" || communityLevel === "serious";
         });
 
     const ratingFiltered = filters.minimumRating === 0
@@ -309,21 +305,16 @@ export default function ClubListingsPage({
     return ratingFiltered.sort((a, b) => {
       if (sortMode === "rating-desc") return (b.rating ?? -1) - (a.rating ?? -1);
       if (sortMode === "rating-asc") return (a.rating ?? Number.POSITIVE_INFINITY) - (b.rating ?? Number.POSITIVE_INFINITY);
-      if (sortMode === "commitment-desc") return COMMITMENT[b.commitment].rank - COMMITMENT[a.commitment].rank;
-      return COMMITMENT[a.commitment].rank - COMMITMENT[b.commitment].rank;
+      if (sortMode === "commitment-desc") return (b.communityCommitment ?? -1) - (a.communityCommitment ?? -1);
+      return (a.communityCommitment ?? Number.POSITIVE_INFINITY) - (b.communityCommitment ?? Number.POSITIVE_INFINITY);
     });
-  }, [clubs, filters, sortMode, submittedQuery]);
+  }, [clubs, filters, randomCategory, randomSeed, sortMode, submittedQuery]);
 
   const selectedSortLabel = SORT_OPTIONS.find((option) => option.value === sortMode)?.label;
 
-  const pageContext = useContext(PageContext);
-
-
   return (
     <main className="clubs-page">
-      <div className="clubs-eyebrow hover-mouse" onClick={() => {pageContext.setPageNum(1)}}>Back home</div>
       <div className="clubs-title-row">
-        <h1>Popular across Cal Poly</h1>
         <p className="clubs-count" aria-live="polite">
           {loading ? "Loading clubs…" : `${visibleClubs.length} ${visibleClubs.length === 1 ? "club" : "clubs"}${submittedQuery ? " found" : ""}`}
         </p>

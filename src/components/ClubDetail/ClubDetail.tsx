@@ -1,25 +1,20 @@
 import { useEffect, useState } from "react";
 import {
-  ArrowLeft,
-  CalendarDays,
-  Clock3,
   CircleUserRound,
   ExternalLink,
   Globe2,
-  MapPin,
   MessageCircle,
   Plus,
-  Star,
-  Users,
 } from "lucide-react";
 import { FaDiscord, FaInstagram } from "react-icons/fa";
 import { SiGroupme } from "react-icons/si";
 import type { Club } from "../clubview/ClubListingsPage";
 import { supabase } from "../../utils/supabase";
+import { RatingStars } from "../RatingStars/RatingStars";
+import { starsToStoredRating, storedRatingToStars } from "../../utils/ratings";
 import "./ClubDetail.css";
 
 type ClubDetailProps = {
-  onBack: () => void;
   club?: Club;
 };
 
@@ -45,21 +40,30 @@ type Review = {
   rating: number;
   review: string | null;
   club_id: number;
-  commitment: number;
+  commitment: number | null;
 };
 
-type NewReview = Omit<Review, "id" | "created_at">;
+const commitmentOptions = [
+  { value: 1, label: "No commitment", detail: "Drop in whenever you want", tone: "none" },
+  { value: 2, label: "Low commitment", detail: "Events every once in a while", tone: "low" },
+  { value: 3, label: "Moderate commitment", detail: "A few hours each week", tone: "moderate" },
+  { value: 4, label: "High commitment", detail: "3–5 hours each week", tone: "high" },
+  { value: 5, label: "Serious commitment", detail: "6+ hours each week", tone: "serious" },
+] as const;
 
-const commitmentLabels = ["Low", "Light", "Moderate", "High", "Serious"];
+const commitmentLabel = (value: number | null) =>
+  commitmentOptions.find((option) => option.value === value)?.label ?? "Unknown commitment";
 
-export function ClubDetail({ onBack, club }: ClubDetailProps) {
+const commitmentTone = (average: number) => commitmentOptions[Math.max(0, Math.min(4, Math.round(average) - 1))].tone;
+
+export function ClubDetail({ club }: ClubDetailProps) {
   const [reviewOpen, setReviewOpen] = useState(false);
   const [commitment, setCommitment] = useState(3);
   const [enjoyment, setEnjoyment] = useState(0);
   const [comment, setComment] = useState("");
   const [reviewError, setReviewError] = useState<string | null>(null);
   const [reviewList, setReviewList] = useState<Review[]>([]);
-  const [newReview, setNewReview] = useState<NewReview | "">("");
+  const [newReview, setNewReview] = useState(false);
   const [isPostingReview, setIsPostingReview] = useState(false);
   const clubName = club?.name ?? "Cal Poly Robotics";
   const clubDescription = club?.description ?? "A hands-on community for students who want to design, build, and compete with robots together.";
@@ -68,6 +72,19 @@ export function ClubDetail({ onBack, club }: ClubDetailProps) {
   const commitmentLevel = club?.commitment ?? "moderate";
   const commitmentInfo = commitmentDetails[commitmentLevel];
   const contactLinks = club?.contactLinks ?? [];
+  const communityRating = reviewList.length > 0
+    ? reviewList.reduce((total, review) => total + review.rating, 0) / reviewList.length
+    : undefined;
+  const communityRatingLabel = communityRating === undefined
+    ? "No enjoyment rating yet"
+    : `${communityRating.toFixed(1)} out of 4 stars`;
+  const validCommitments = reviewList
+    .map((review) => review.commitment)
+    .filter((value): value is number => value !== null && Number.isInteger(value) && value >= 1 && value <= 5);
+  const communityCommitment = validCommitments.length > 0
+    ? validCommitments.reduce((total, value) => total + value, 0) / validCommitments.length
+    : undefined;
+  const communityCommitmentLevel = communityCommitment === undefined ? undefined : commitmentTone(communityCommitment);
   const parsedClubId = Number(club?.id);
   const clubId = Number.isInteger(parsedClubId) ? parsedClubId : null;
 
@@ -91,7 +108,15 @@ export function ClubDetail({ onBack, club }: ClubDetailProps) {
         setReviewError("Reviews could not be loaded right now.");
         return;
       }
-      setReviewList((data ?? []) as Review[]);
+      setReviewList((data ?? []).flatMap((row) => {
+        const rating = storedRatingToStars(row.rating);
+        const reviewCommitment = Number(row.commitment);
+        if (rating === null) return [];
+        const commitmentValue = Number.isInteger(reviewCommitment) && reviewCommitment >= 1 && reviewCommitment <= 5
+          ? reviewCommitment
+          : null;
+        return [{ ...row, rating, commitment: commitmentValue } as Review];
+      }));
     }
 
     void loadReviews();
@@ -129,15 +154,21 @@ export function ClubDetail({ onBack, club }: ClubDetailProps) {
       return;
     }
 
-    const newReviewData: NewReview = {
+    const storedRating = starsToStoredRating(enjoyment);
+    if (storedRating === null) {
+      setReviewError("Choose a rating from 0.5 to 4 stars.");
+      return;
+    }
+
+    const newReviewData = {
       name: "Anonymous",
-      rating: enjoyment,
+      rating: storedRating,
       review: note,
       club_id: clubId,
       commitment,
     };
 
-    setNewReview(newReviewData);
+    setNewReview(true);
     setIsPostingReview(true);
     setReviewError(null);
 
@@ -148,24 +179,25 @@ export function ClubDetail({ onBack, club }: ClubDetailProps) {
       .single();
 
     setIsPostingReview(false);
-    setNewReview("");
+    setNewReview(false);
 
     if (error) {
       setReviewError(error.message);
       return;
     }
 
-    setReviewList((previousReviews) => [data as Review, ...previousReviews]);
+    const returnedRating = storedRatingToStars(data.rating);
+    if (returnedRating === null) {
+      setReviewError("The submitted rating was invalid.");
+      return;
+    }
+    setReviewList((previousReviews) => [{ ...data, rating: returnedRating, commitment } as Review, ...previousReviews]);
     closeReviewDialog();
   }
 
   return (
     <main className="club-detail">
       <div className="club-detail__content">
-        <button className="club-detail__back" type="button" onClick={onBack}>
-          <ArrowLeft size={17} /> Back to clubs
-        </button>
-
         <section className="club-detail__hero" aria-labelledby="club-title">
           <div className="club-detail__mark">
             {club?.logoUrl ? (
@@ -195,28 +227,41 @@ export function ClubDetail({ onBack, club }: ClubDetailProps) {
           </section>
 
           <div className="club-detail__right-rail">
-            <section className="detail-card club-detail__official">
-              <div className="detail-card__heading">
-                <div>
-                  <div className="detail-card__title">
-                    <h2>Official details</h2>
-                    <span
-                      className="club-detail__info-tip"
-                      tabIndex={0}
-                      aria-label="Some of these details were submitted by the club."
-                      data-tooltip="Some of these details were submitted by the club."
-                    >
-                      i
-                    </span>
-                  </div>
+            {contactLinks.length > 0 && (
+              <aside className="detail-card club-detail__contact">
+                <h2>Connect with the club</h2>
+                <div className="club-detail__contact-icons">
+                  {contactLinks.map((contact, index) => {
+                    const Icon = contactIcons[contact.platform];
+                    return (
+                      <a
+                        key={`${contact.platform}-${contact.url}-${index}`}
+                        href={contact.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        aria-label={contact.platform}
+                        title={contact.platform}
+                      >
+                        <Icon size={22} aria-hidden="true" />
+                        <ExternalLink size={12} aria-hidden="true" />
+                      </a>
+                    );
+                  })}
                 </div>
-                <span className="club-detail__updated">Updated this month</span>
-              </div>
-              <div className="club-detail__facts">
-                <div><MapPin size={18} /><span><b>Meeting room</b>14-0233</span></div>
-                <div><CalendarDays size={18} /><span><b>Established</b>Fall 2016</span></div>
-                <div><Users size={18} /><span><b>Open to</b>All majors</span></div>
-                <div><Clock3 size={18} /><span><b>Meets</b>Thursdays at 6 PM</span></div>
+              </aside>
+            )}
+
+            <section className="detail-card club-detail__official">
+              <div className="detail-card__title">
+                <h2>Official details</h2>
+                <span
+                  className="club-detail__info-tip"
+                  tabIndex={0}
+                  aria-label="Some of these details were submitted by the club."
+                  data-tooltip="Some of these details were submitted by the club."
+                >
+                  i
+                </span>
               </div>
               <div className="club-detail__commitment-summary">
                 <span className={`club-detail__commitment-dot club-detail__commitment-dot--${commitmentLevel}`} aria-hidden="true" />
@@ -239,41 +284,23 @@ export function ClubDetail({ onBack, club }: ClubDetailProps) {
               <div className="club-detail__community-metrics">
                 <div className="club-detail__community-metric">
                   <b>Enjoyment</b>
-                  <span className="club-detail__score" aria-label="Enjoyment rating">★★★★</span>
+                  <div className="club-detail__rating-value">
+                    <RatingStars value={communityRating ?? 0} label={communityRatingLabel} className="club-detail__community-rating" />
+                    <span>{communityRating === undefined ? "Not rated yet" : `${communityRating.toFixed(1)} / 4`}</span>
+                  </div>
                 </div>
                 <div className="club-detail__community-metric">
                   <b>Commitment</b>
-                  <div className="club-detail__community-commitment">
-                    <span className={`club-detail__commitment-dot club-detail__commitment-dot--${commitmentLevel}`} aria-hidden="true" />
-                    <span>{commitmentInfo.label}</span>
-                  </div>
+                  {communityCommitment !== undefined && communityCommitmentLevel ? (
+                    <div className="club-detail__community-commitment" aria-label={`Average community commitment: ${communityCommitment.toFixed(1)} out of 5, ${commitmentLabel(Math.round(communityCommitment))}`}>
+                      <span className={`club-detail__commitment-dot club-detail__commitment-dot--${communityCommitmentLevel}`} aria-hidden="true" />
+                      <span>{communityCommitment.toFixed(1)} / 5 · {commitmentLabel(Math.round(communityCommitment))}</span>
+                    </div>
+                  ) : <span className="club-detail__community-commitment">No community commitment yet</span>}
                 </div>
               </div>
             </section>
 
-            {contactLinks.length > 0 && (
-              <aside className="detail-card club-detail__contact">
-                <h2>Connect with the club</h2>
-                <div className="club-detail__contact-icons">
-                  {contactLinks.map((contact) => {
-                    const Icon = contactIcons[contact.platform];
-                    return (
-                      <a
-                        key={contact.platform}
-                        href={contact.url}
-                        target="_blank"
-                        rel="noreferrer"
-                        aria-label={contact.platform}
-                        title={contact.platform}
-                      >
-                        <Icon size={22} aria-hidden="true" />
-                        <ExternalLink size={12} aria-hidden="true" />
-                      </a>
-                    );
-                  })}
-                </div>
-              </aside>
-            )}
           </div>
 
           <section className="detail-card club-detail__comments">
@@ -289,8 +316,8 @@ export function ClubDetail({ onBack, club }: ClubDetailProps) {
                 <div>
                   <div className="club-detail__review-meta">
                     <b>{review.name?.trim() || "Anonymous"}</b>
-                    <span>{commitmentLabels[review.commitment - 1]} commitment</span>
-                    <span aria-label={`${review.rating} out of 4 stars`}>{"★".repeat(review.rating)}</span>
+                    <span>{commitmentLabel(review.commitment)}</span>
+                    <RatingStars value={review.rating} size={16} label={`${review.rating} out of 4 stars`} className="club-detail__review-rating" />
                     <time dateTime={review.created_at}>{new Date(review.created_at).toLocaleDateString(undefined, { month: "long", day: "numeric", year: "numeric" })}</time>
                   </div>
                   {review.review && <p>{review.review}</p>}
@@ -305,8 +332,26 @@ export function ClubDetail({ onBack, club }: ClubDetailProps) {
         <div className="review-dialog-backdrop" role="presentation" onMouseDown={closeReviewDialog}>
           <section className="review-dialog" role="dialog" aria-modal="true" aria-labelledby="review-title" onMouseDown={(event) => event.stopPropagation()}>
             <h2 id="review-title">Review {clubName}</h2>
-            <label>Weekly commitment <b>{commitmentLabels[commitment - 1]}</b><input type="range" min="1" max="5" value={commitment} disabled={isPostingReview} onChange={(event) => setCommitment(Number(event.target.value))} /></label>
-            <fieldset><legend>How much did you enjoy it?</legend><div className="review-dialog__stars">{[1, 2, 3, 4].map((rating) => <button type="button" key={rating} aria-label={`${rating} stars`} disabled={isPostingReview} onClick={() => setEnjoyment(rating)}><Star fill={rating <= enjoyment ? "currentColor" : "none"} /></button>)}</div></fieldset>
+            <fieldset className="review-dialog__commitment">
+              <legend>Weekly commitment <b>{commitmentLabel(commitment)}</b></legend>
+              <div className="review-dialog__commitment-options" role="radiogroup" aria-label="Weekly commitment">
+                {commitmentOptions.map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    role="radio"
+                    aria-checked={commitment === option.value}
+                    className={`review-dialog__commitment-option review-dialog__commitment-option--${option.tone}${commitment === option.value ? " is-selected" : ""}`}
+                    disabled={isPostingReview}
+                    onClick={() => setCommitment(option.value)}
+                  >
+                    <span className="review-dialog__commitment-dot" aria-hidden="true" />
+                    <span>{option.label}</span>
+                  </button>
+                ))}
+              </div>
+            </fieldset>
+            <fieldset><legend>How much did you enjoy it?</legend><RatingStars value={enjoyment} size={28} onChange={setEnjoyment} label="Enjoyment rating" disabled={isPostingReview} className="review-dialog__stars" /></fieldset>
             <label>Leave a note<textarea value={comment} disabled={isPostingReview} onChange={(event) => setComment(event.target.value)} placeholder="What should other students know?" /></label>
             {reviewError && <p role="alert">{reviewError}</p>}
             <div className="review-dialog__actions"><button type="button" disabled={isPostingReview} onClick={closeReviewDialog}>Cancel</button><button type="button" className="review-dialog__submit" disabled={isPostingReview} onClick={() => void addReview()}>{isPostingReview ? "Posting…" : "Post review"}</button></div>

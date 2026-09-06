@@ -1,19 +1,15 @@
-import { useContext, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
-  ArrowLeft,
-  AtSign,
   Camera,
   Check,
   ChevronDown,
-  CircleHelp,
   Globe2,
   Plus,
-  ShieldCheck,
-  Users,
   X,
 } from "lucide-react";
+import { FaDiscord, FaInstagram } from "react-icons/fa";
+import { SiGroupme } from "react-icons/si";
 import "/src/components/createpage/createpagestyle.css";
-import { PageContext } from "../../PageContext";
 import { majorGroups } from "../../data/majors";
 import { supabase } from "../../utils/supabase";
 
@@ -26,13 +22,38 @@ const spectrum = [
 ];
 
 const clubTypes = [
-  ["sport", "Sport", "This club is a sport"],
-  ["culture", "Culture", "This is a culture club"],
-  ["art", "Art", "Any kind of art"],
-  ["academic", "Academic", "Has to do with a major or academics"],
-  ["fun", "Fun", "EX: Hummus Club"],
-  ["other", "Other", "None of the previous options"],
+  ["sport", "Sport"],
+  ["culture", "Culture"],
+  ["art", "Art"],
+  ["academic", "Academic"],
+  ["fun", "Fun"],
+  ["other", "Other"],
 ] as const;
+
+type ContactPlatform = "discord" | "groupme" | "instagram" | "website";
+type ContactRow = { id: string; platform: ContactPlatform; value: string };
+
+const contactOptions: Array<{ value: ContactPlatform; label: string }> = [
+  { value: "discord", label: "Discord" },
+  { value: "groupme", label: "GroupMe" },
+  { value: "instagram", label: "Instagram" },
+  { value: "website", label: "Website" },
+];
+
+function createContactRow(platform: ContactPlatform): ContactRow {
+  return {
+    id: crypto.randomUUID(),
+    platform,
+    value: "",
+  };
+}
+
+function ContactIcon({ platform }: { platform: ContactPlatform }) {
+  if (platform === "discord") return <FaDiscord aria-hidden="true" />;
+  if (platform === "groupme") return <SiGroupme aria-hidden="true" />;
+  if (platform === "instagram") return <FaInstagram aria-hidden="true" />;
+  return <Globe2 aria-hidden="true" />;
+}
 
 const CLUB_IMAGES_BUCKET = "club_icons";
 const DEFAULT_TAG_OPTIONS = [
@@ -59,7 +80,6 @@ const DEFAULT_TAG_OPTIONS = [
 ];
 
 function CreatePage() {
-  const pageContext = useContext(PageContext);
   const inputRef = useRef<HTMLInputElement>(null);
   const [image, setImage] = useState<string | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -76,12 +96,8 @@ function CreatePage() {
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [contactLinks, setContactLinks] = useState({
-    instagram: "",
-    discord: "",
-    groupme: "",
-    website: "",
-  });
+  const [contactLinks, setContactLinks] = useState<ContactRow[]>([]);
+  const [contactMenuOpen, setContactMenuOpen] = useState(false);
 
   const addTag = () => {
     const value = tagText.trim();
@@ -177,9 +193,9 @@ function CreatePage() {
         club_info_last_updated: new Date().toISOString(),
         meeting_info: [],
         tags: clubTags,
-        contact_links: Object.entries(contactLinks)
-          .filter(([, value]) => value.trim())
-          .map(([platform, url]) => ({ platform, url })),
+        contact_links: contactLinks
+          .filter(({ value }) => value.trim())
+          .map(({ platform, value }) => ({ platform, url: value.trim() })),
       });
 
     setSubmitting(false);
@@ -195,15 +211,8 @@ function CreatePage() {
   return (
     <main>
       <section className="page-head">
-        <button className="back" onClick={() => pageContext.setPageNum(1)}>
-          <ArrowLeft size={18} /> Back to dashboard
-        </button>
         <div>
-          <p className="eyebrow"></p>
           <h1>Add your club</h1>
-          <p className="subtitle">
-            Add your club to ClubRate so that others can see and rate it.
-          </p>
         </div>
       </section>
       <section className="layout">
@@ -212,7 +221,6 @@ function CreatePage() {
             <span className="step">01</span>
             <div>
               <h2>Basic information</h2>
-              <p>Details such as name, image, and club description.</p>
             </div>
           </div>
           <div className="profile-row">
@@ -247,9 +255,6 @@ function CreatePage() {
             />
             <div>
               <label>Club image</label>
-              <p className="muted">
-                Upload an image for your club for others to view at a glance.
-              </p>
               <button
                 className="upload"
                 onClick={() => inputRef.current?.click()}
@@ -275,7 +280,7 @@ function CreatePage() {
             <textarea
               value={description}
               onChange={(event) => setDescription(event.target.value)}
-              placeholder="What is your club all about? Keep it welcoming, clear, and specific."
+              placeholder="Enter a short description"
               maxLength={2000}
             />
             <span className="count">{description.length} / 2000</span>
@@ -284,9 +289,6 @@ function CreatePage() {
             <label>
               Tags <span className="optional">Optional</span>
             </label>
-            <p className="hint">
-              Help students find you. Add topics, interests, or disciplines.
-            </p>
             <div className="tag-picker">
               <div className="tagbox">
                 {tags.map((tag) => (
@@ -352,9 +354,6 @@ function CreatePage() {
             <label>
               Targeted majors <span className="optional">Optional</span>
             </label>
-            <p className="hint">
-              Select any majors your club is especially relevant to.
-            </p>
             <button className="select" onClick={() => setMajorOpen(!majorOpen)}>
               {majors.length
                 ? `${majors.length} major${majors.length > 1 ? "s" : ""} selected`
@@ -406,7 +405,6 @@ function CreatePage() {
             <span className="step">02</span>
             <div>
               <h2>What’s the commitment?</h2>
-              <p>Set expectations so students know what to expect.</p>
             </div>
           </div>
           <div className="commitment">
@@ -429,120 +427,104 @@ function CreatePage() {
                 </button>
               ))}
             </div>
-            <input
-              aria-label="Commitment level"
-              type="range"
-              min="0"
-              max="4"
-              step="0.01"
-              value={commitment}
-              onChange={(event) =>
-                setCommitment(Math.round(+event.target.value))
-              }
-            />
-            <div className="range-label">
-              <b>{spectrum[commitment][0]}</b>
-              <span>{spectrum[commitment][1]}</span>
-            </div>
           </div>
           <div className="section-title lower">
-            <span className="step">04</span>
+            <span className="step">03</span>
             <div>
               <h2>Select the type of club</h2>
-              <p>Do any of these apply to your club?</p>
-              <br/>
             </div>
           </div>
           <div
             className="club-types"
             role="radiogroup"
             aria-label="Club type"
-            style={{ display: "flex", flexWrap: "nowrap", gap: "10px" }}
           >
-            {clubTypes.map(([value, label, description]) => (
+            {clubTypes.map(([value, label]) => (
               <button
-                className="upload"
+                className={`club-type${clubType === value ? " club-type--selected" : ""}`}
                 type="button"
                 role="radio"
                 aria-checked={clubType === value}
-                aria-label={`${label}: ${description}`}
+                aria-label={label}
                 key={value}
                 onClick={() => setClubType(value)}
-                style={
-                  clubType === value
-                    ? { borderColor: "#2e6244", background: "#edf5ec", boxShadow: "0 0 0 3px #cfe3d1" }
-                    : undefined
-                }
               >
-                {label}
+                <strong>{label}</strong>
+                <span className="club-type__radio">
+                  {clubType === value && <Check size={13} />}
+                </span>
               </button>
             ))}
           </div>
           <div className="section-title lower">
-            <span className="step">05</span>
+            <span className="step">04</span>
             <div>
               <h2>Ways to connect</h2>
-              <p>Add any links you’d like students to use.</p>
             </div>
           </div>
-          <div className="contacts">
-            <div className="contact">
-              <AtSign size={18} />
-              <input
-                value={contactLinks.instagram}
-                onChange={(event) =>
-                  setContactLinks({
-                    ...contactLinks,
-                    instagram: event.target.value,
-                  })
-                }
-                placeholder="Instagram handle or link"
-              />
-            </div>
-            <div className="contact">
-              <Users size={18} />
-              <input
-                value={contactLinks.discord}
-                onChange={(event) =>
-                  setContactLinks({
-                    ...contactLinks,
-                    discord: event.target.value,
-                  })
-                }
-                placeholder="Discord invite link"
-              />
-            </div>
-            <div className="contact">
-              <CircleHelp size={18} />
-              <input
-                value={contactLinks.groupme}
-                onChange={(event) =>
-                  setContactLinks({
-                    ...contactLinks,
-                    groupme: event.target.value,
-                  })
-                }
-                placeholder="GroupMe link"
-              />
-            </div>
-            <div className="contact">
-              <Globe2 size={18} />
-              <input
-                value={contactLinks.website}
-                onChange={(event) =>
-                  setContactLinks({
-                    ...contactLinks,
-                    website: event.target.value,
-                  })
-                }
-                placeholder="Club website"
-              />
+          <div className="contacts" aria-label="Club contact links">
+            {contactLinks.map((contact) => {
+              const platformLabel = contactOptions.find((option) => option.value === contact.platform)?.label ?? "Contact";
+              return (
+                <div className="contact" key={contact.id}>
+                  <ContactIcon platform={contact.platform} />
+                  <label className="sr-only" htmlFor={`contact-${contact.id}`}>
+                    {platformLabel} link or handle
+                  </label>
+                  <input
+                    id={`contact-${contact.id}`}
+                    type={contact.platform === "website" ? "url" : "text"}
+                    value={contact.value}
+                    onChange={(event) =>
+                      setContactLinks((current) => current.map((item) =>
+                        item.id === contact.id ? { ...item, value: event.target.value } : item,
+                      ))
+                    }
+                    placeholder={contact.platform === "website" ? "Website URL" : `${platformLabel} link or handle`}
+                  />
+                  <button
+                    type="button"
+                    className="contact-remove"
+                    aria-label={`Remove ${platformLabel} contact`}
+                    onClick={() => setContactLinks((current) => current.filter((item) => item.id !== contact.id))}
+                  >
+                    <X size={16} aria-hidden="true" />
+                  </button>
+                </div>
+              );
+            })}
+            <div className="contact-add">
+              <button
+                type="button"
+                className="add contact-add-button"
+                aria-label="Add a contact link"
+                aria-haspopup="menu"
+                aria-expanded={contactMenuOpen}
+                onClick={() => setContactMenuOpen((open) => !open)}
+              >
+                <Plus size={18} aria-hidden="true" />
+              </button>
+              {contactMenuOpen && (
+                <div className="contact-menu" role="menu" aria-label="Choose a contact platform">
+                  {contactOptions.map((option) => (
+                    <button
+                      key={option.value}
+                      type="button"
+                      role="menuitem"
+                      onClick={() => {
+                        setContactLinks((current) => [...current, createContactRow(option.value)]);
+                        setContactMenuOpen(false);
+                      }}
+                    >
+                      <ContactIcon platform={option.value} />
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
           <div className="actions">
-            <p>
-              <ShieldCheck size={17} /> You can edit these details anytime.
-            </p>
             <div>
               {error && (
                 <p className="form-error" role="alert">

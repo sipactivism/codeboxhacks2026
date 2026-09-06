@@ -1,4 +1,5 @@
 import "./RandomizeButton.css";
+import { Dices } from "lucide-react";
 
 type RandomizeButtonProps = {
   onClick: () => void;
@@ -6,9 +7,13 @@ type RandomizeButtonProps = {
 
 export function RandomizeButton({ onClick }: RandomizeButtonProps) {
   return (
-    <button className="randomize-button" type="button" onClick={onClick}>
-      <img src="/images/random-dice.png" alt="" />
-      Randomize
+    <button
+      className="randomize-button"
+      type="button"
+      onClick={onClick}
+      aria-label="Randomize clubs"
+    >
+      <Dices aria-hidden="true" strokeWidth={2.2} />
     </button>
   );
 }
