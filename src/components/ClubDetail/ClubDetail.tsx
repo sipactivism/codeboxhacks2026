@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ArrowLeft,
   CalendarDays,
@@ -38,14 +38,27 @@ const commitmentDetails = {
   serious: { label: "Serious commitment", detail: "6+ hours each week" },
 };
 
+type SubmittedReview = {
+  id: string;
+  date: string;
+  dateTime: string;
+  commitment: number;
+  enjoyment: number;
+  body: string;
+};
+
+const commitmentLabels = ["Low", "Light", "Moderate", "High", "Serious"];
+
 const mockReviews = [
   {
+    id: "mock-review-1",
     date: "May 12, 2026",
     dateTime: "2026-05-12",
     schoolYear: "Third-year",
     body: "Everyone is willing to teach. I joined without experience and had a project to show off by the end of the quarter.",
   },
   {
+    id: "mock-review-2",
     date: "April 28, 2026",
     dateTime: "2026-04-28",
     schoolYear: "Fourth-year",
@@ -53,17 +66,77 @@ const mockReviews = [
   },
 ];
 
+function loadSubmittedReviews(storageKey: string): SubmittedReview[] {
+  try {
+    const savedReviews = localStorage.getItem(storageKey);
+    return savedReviews ? JSON.parse(savedReviews) : [];
+  } catch {
+    return [];
+  }
+}
+
 export function ClubDetail({ onBack, club }: ClubDetailProps) {
   const [reviewOpen, setReviewOpen] = useState(false);
   const [commitment, setCommitment] = useState(3);
   const [enjoyment, setEnjoyment] = useState(0);
   const [comment, setComment] = useState("");
+  const [reviewError, setReviewError] = useState<string | null>(null);
   const clubName = club?.name ?? "Cal Poly Robotics";
   const clubDescription = club?.description ?? "A hands-on community for students who want to design, build, and compete with robots together.";
   const clubTags = club?.tags ?? ["Engineering", "Robotics", "Build teams"];
   const commitmentLevel = club?.commitment ?? "moderate";
   const commitmentInfo = commitmentDetails[commitmentLevel];
   const contactLinks = club?.contactLinks ?? [];
+  const reviewStorageKey = `clubrate:reviews:${club?.id ?? "cal-poly-robotics"}`;
+  const [submittedReviews, setSubmittedReviews] = useState<SubmittedReview[]>(() =>
+    loadSubmittedReviews(reviewStorageKey),
+  );
+
+  useEffect(() => {
+    setSubmittedReviews(loadSubmittedReviews(reviewStorageKey));
+  }, [reviewStorageKey]);
+
+  function closeReviewDialog() {
+    setReviewOpen(false);
+    setReviewError(null);
+  }
+
+  function submitReview() {
+    const note = comment.trim();
+
+    if (enjoyment === 0) {
+      setReviewError("Choose a star rating before posting your review.");
+      return;
+    }
+
+    if (!note) {
+      setReviewError("Write a short note before posting your review.");
+      return;
+    }
+
+    const now = new Date();
+    const newReview: SubmittedReview = {
+      id: crypto.randomUUID(),
+      date: now.toLocaleDateString(undefined, { month: "long", day: "numeric", year: "numeric" }),
+      dateTime: now.toISOString(),
+      commitment,
+      enjoyment,
+      body: note,
+    };
+    const nextReviews = [newReview, ...submittedReviews];
+
+    setSubmittedReviews(nextReviews);
+    try {
+      localStorage.setItem(reviewStorageKey, JSON.stringify(nextReviews));
+    } catch {
+      // The review remains visible for this visit if browser storage is unavailable.
+    }
+
+    setCommitment(3);
+    setEnjoyment(0);
+    setComment("");
+    closeReviewDialog();
+  }
 
   return (
     <main className="club-detail">
@@ -181,13 +254,18 @@ export function ClubDetail({ onBack, club }: ClubDetailProps) {
               <div><h2>Reviews</h2></div>
               <MessageCircle size={21} aria-hidden="true" />
             </div>
-            {mockReviews.map((review, index) => (
-              <article className="club-detail__comment" key={review.dateTime}>
+            {[...submittedReviews, ...mockReviews].map((review, index) => (
+              <article className="club-detail__comment" key={review.id}>
                 <span className={`club-detail__avatar${index === 1 ? " club-detail__avatar--gold" : ""}`} aria-hidden="true"><CircleUserRound size={21} /></span>
                 <div>
                   <div className="club-detail__review-meta">
                     <b>Anonymous</b>
-                    <span>{review.schoolYear}</span>
+                    {"commitment" in review ? (
+                      <>
+                        <span>{commitmentLabels[review.commitment - 1]} commitment</span>
+                        <span aria-label={`${review.enjoyment} out of 4 stars`}>{"★".repeat(review.enjoyment)}</span>
+                      </>
+                    ) : <span>{review.schoolYear}</span>}
                     <time dateTime={review.dateTime}>{review.date}</time>
                   </div>
                   <p>{review.body}</p>
@@ -199,13 +277,14 @@ export function ClubDetail({ onBack, club }: ClubDetailProps) {
       </div>
 
       {reviewOpen && (
-        <div className="review-dialog-backdrop" role="presentation" onMouseDown={() => setReviewOpen(false)}>
+        <div className="review-dialog-backdrop" role="presentation" onMouseDown={closeReviewDialog}>
           <section className="review-dialog" role="dialog" aria-modal="true" aria-labelledby="review-title" onMouseDown={(event) => event.stopPropagation()}>
             <h2 id="review-title">Review {clubName}</h2>
-            <label>Weekly commitment <b>{["Low", "Light", "Moderate", "High", "Serious"][commitment - 1]}</b><input type="range" min="1" max="5" value={commitment} onChange={(event) => setCommitment(Number(event.target.value))} /></label>
+            <label>Weekly commitment <b>{commitmentLabels[commitment - 1]}</b><input type="range" min="1" max="5" value={commitment} onChange={(event) => setCommitment(Number(event.target.value))} /></label>
             <fieldset><legend>How much did you enjoy it?</legend><div className="review-dialog__stars">{[1, 2, 3, 4].map((rating) => <button type="button" key={rating} aria-label={`${rating} stars`} onClick={() => setEnjoyment(rating)}><Star fill={rating <= enjoyment ? "currentColor" : "none"} /></button>)}</div></fieldset>
             <label>Leave a note<textarea value={comment} onChange={(event) => setComment(event.target.value)} placeholder="What should other students know?" /></label>
-            <div className="review-dialog__actions"><button type="button" onClick={() => setReviewOpen(false)}>Cancel</button><button type="button" className="review-dialog__submit" onClick={() => setReviewOpen(false)}>Post review</button></div>
+            {reviewError && <p role="alert">{reviewError}</p>}
+            <div className="review-dialog__actions"><button type="button" onClick={closeReviewDialog}>Cancel</button><button type="button" className="review-dialog__submit" onClick={submitReview}>Post review</button></div>
           </section>
         </div>
       )}
