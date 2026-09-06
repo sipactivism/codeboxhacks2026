@@ -54,7 +54,15 @@ function PageContainer() {
   const goBack = useCallback(() => {
     const previousPage = pageHistory.at(-1) ?? 1;
     setPageHistory((history) => history.slice(0, -1));
-    setPageNum(previousPage);
+    if(previousPage == pageNum)
+    {
+      setPageNum(1);
+      setPageHistory([]);
+    }
+    else
+    {
+      setPageNum(previousPage);
+    }
   }, [pageHistory, setPageHistory, setPageNum]);
 
   function openCategory(category: BrowseCategory, currentFilters: ClubFilters) {
