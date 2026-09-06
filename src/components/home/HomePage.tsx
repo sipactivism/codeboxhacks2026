@@ -76,6 +76,10 @@ export function HomePage({
     onOpenCategory("major-specific", { ...filters, query: major });
   }
 
+  function openTopRated() {
+    onOpenCategory("top-rated", { ...filters, query: "" });
+  }
+
   return (
     <main className="home-page">
       <section className="home-page__content">
@@ -88,9 +92,7 @@ export function HomePage({
         />
 
         <TopRatedCard
-          onOpen={() =>
-            onOpenCategory("top-rated", filters)
-          }
+          onOpen={openTopRated}
         />
 
         <section
