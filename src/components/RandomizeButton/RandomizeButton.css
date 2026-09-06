@@ -1,0 +1,38 @@
+.randomize-button {
+  position: fixed;
+  z-index: 30;
+  bottom: 20px;
+  left: 20px;
+  display: inline-flex;
+  min-height: 42px;
+  align-items: center;
+  gap: 7px;
+  padding: 0 14px;
+  border: 1px solid var(--cal-poly-green);
+  border-radius: 12px;
+  background: var(--cal-poly-green);
+  box-shadow: 0 8px 22px rgba(22, 34, 27, 0.22);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 750;
+}
+
+.randomize-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 26px rgba(22, 34, 27, 0.3);
+}
+
+.randomize-button img {
+  width: 20px;
+  height: 20px;
+  border-radius: 5px;
+  object-fit: cover;
+  object-position: center;
+}
+
+@media (max-width: 560px) {
+  .randomize-button {
+    bottom: 16px;
+    left: 16px;
+  }
+}

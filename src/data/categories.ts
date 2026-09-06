@@ -27,8 +27,8 @@ export const categories: Category[] = [
     description: "Special interests and unique hobbies",
   },
   {
-    id: "random",
-    name: "Random",
-    description: "Discover something unexpected",
+    id: "academic",
+    name: "Academic",
+    description: "Majors, careers, and academic communities",
   },
 ];

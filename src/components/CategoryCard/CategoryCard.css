@@ -29,7 +29,7 @@
 .category-card--culture::before,
 .category-card--fun::before,
 .category-card--niche::before,
-.category-card--random::before {
+.category-card--academic::before {
   position: absolute;
   z-index: 0;
   inset: 0;
@@ -81,13 +81,11 @@
   background-position: center 34%;
 }
 
-.category-card--random::before {
+.category-card--academic::before {
   background-image:
-    linear-gradient(rgba(14, 29, 21, 0.52), rgba(14, 29, 21, 0.52)),
-    url("/images/random-dice.png");
-  background-color: #9fcbd2;
-  background-position: center 49%;
-  background-size: 115% auto;
+    linear-gradient(rgba(14, 29, 21, 0.58), rgba(14, 29, 21, 0.58)),
+    url("/images/academic-graduates.png");
+  background-position: center 48%;
 }
 
 .category-card:hover {

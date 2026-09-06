@@ -1,12 +1,14 @@
 import { useContext, useState } from "react";
 
 import { ClubDetail } from "./components/ClubDetail/ClubDetail";
-import ClubListingsPage from "./components/clubview/ClubListingsPage";
+import ClubListingsPage, { clubFromRow } from "./components/clubview/ClubListingsPage";
 import type { Club } from "./components/clubview/ClubListingsPage";
 import CreatePage from "./components/createpage/createpage";
 import { HomePage } from "./components/home/HomePage";
+import { RandomizeButton } from "./components/RandomizeButton/RandomizeButton";
 import { PageContext, PageProvider } from "./PageContext";
 import type { BrowseCategory, ClubFilters } from "./types/clubs";
+import { supabase } from "./utils/supabase";
 
 const CATEGORY_SEARCH_TERMS: Partial<Record<BrowseCategory, string>> = {
   sports: "#sport",
@@ -34,53 +36,96 @@ function PageContainer() {
     minimumRating: 0,
   });
   const [randomCategory, setRandomCategory] = useState(false);
+  const [randomSeed, setRandomSeed] = useState(0);
 
   function openCategory(category: BrowseCategory, currentFilters: ClubFilters) {
-    setRandomCategory(category === "random");
+    setRandomCategory(false);
     setFilters(
-      category === "random"
-        ? { ...currentFilters, query: "" }
-        : CATEGORY_SEARCH_TERMS[category]
-          ? { ...currentFilters, query: CATEGORY_SEARCH_TERMS[category] }
-          : currentFilters,
+      CATEGORY_SEARCH_TERMS[category]
+        ? { ...currentFilters, query: CATEGORY_SEARCH_TERMS[category] }
+        : currentFilters,
     );
     setPageNum(3);
   }
 
+  async function randomizeClubs() {
+    const { data, error } = await supabase
+      .schema("public")
+      .from("clubs")
+      .select("id, name, description, image, club_statistics, tags, contact_links")
+      .eq("approved", true);
+
+    if (!error && data && data.length > 0) {
+      const randomClub = clubFromRow(data[Math.floor(Math.random() * data.length)]);
+      setRandomCategory(false);
+      setSelectedClub(randomClub);
+      setPageNum(4);
+      return;
+    }
+
+    // Preserve the existing randomized-list view as a fallback if the request fails.
+    setRandomCategory(true);
+    setRandomSeed((seed) => seed + 1);
+    setFilters({ ...filters, query: "" });
+    setPageNum(3);
+  }
+
+  function openCreateClub() {
+    setRandomCategory(false);
+    setPageNum(2);
+  }
+
+  function openClub(club: Club) {
+    setRandomCategory(false);
+    setSelectedClub(club);
+    setPageNum(4);
+  }
+
+  let page;
+
   switch (pageNum) {
     case 1:
-      return (
+      page = (
         <HomePage
           filters={filters}
           onFiltersChange={setFilters}
           onOpenCategory={openCategory}
-          onCreateClub={() => setPageNum(2)}
+          onCreateClub={openCreateClub}
         />
       );
+      break;
     case 2:
-      return <CreatePage />;
+      page = <CreatePage />;
+      break;
     case 3:
-      return (
+      page = (
         <ClubListingsPage
           filters={filters}
           onFiltersChange={setFilters}
           randomCategory={randomCategory}
-          onClubClick={(club) => {
-            setSelectedClub(club);
-            setPageNum(4);
-          }}
+          randomSeed={randomSeed}
+          onClubClick={openClub}
         />
       );
+      break;
     case 4:
-      return <ClubDetail club={selectedClub ?? undefined} onBack={() => setPageNum(3)} />;
+      page = <ClubDetail club={selectedClub ?? undefined} onBack={() => setPageNum(3)} />;
+      break;
     default:
-      return (
+      page = (
         <HomePage
           filters={filters}
           onFiltersChange={setFilters}
           onOpenCategory={openCategory}
-          onCreateClub={() => setPageNum(2)}
+          onCreateClub={openCreateClub}
         />
       );
   }
+
+  return (
+    <>
+      {page}
+      <RandomizeButton onClick={randomizeClubs} />
+    </>
+  );
 }

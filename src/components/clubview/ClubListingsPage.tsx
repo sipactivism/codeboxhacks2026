@@ -35,6 +35,7 @@ interface ClubListingsPageProps {
   filters: ClubFilters;
   onFiltersChange: (filters: ClubFilters) => void;
   randomCategory?: boolean;
+  randomSeed?: number;
   onClubClick?: (club: Club) => void;
 }
 
@@ -97,7 +98,7 @@ function contactLinksFrom(value: unknown): NonNullable<Club["contactLinks"]> {
   });
 }
 
-function clubFromRow(row: ClubRow): Club {
+export function clubFromRow(row: ClubRow): Club {
   const stats = row.club_statistics ?? {};
   return {
     id: String(row.id),
@@ -205,6 +206,7 @@ export default function ClubListingsPage({
   filters,
   onFiltersChange,
   randomCategory = false,
+  randomSeed = 0,
   onClubClick,
 }: ClubListingsPageProps) {
   const [clubs, setClubs] = useState<Club[]>([]);
@@ -227,7 +229,8 @@ export default function ClubListingsPage({
     let active = true;
 
     async function loadClubs() {
-      const searchTerm = submittedQuery
+      const activeQuery = randomCategory ? "" : submittedQuery;
+      const searchTerm = activeQuery
         .trim()
         .replace(/[^a-zA-Z0-9\s_#-]/g, " ")
         .replace(/\s+/g, " ")
@@ -270,10 +273,10 @@ export default function ClubListingsPage({
 
     loadClubs();
     return () => { active = false; };
-  }, [randomCategory, submittedQuery]);
+  }, [randomCategory, randomSeed, submittedQuery]);
 
   const visibleClubs = useMemo(() => {
-    const normalizedQuery = submittedQuery.trim().toLowerCase();
+    const normalizedQuery = (randomCategory ? "" : submittedQuery).trim().toLowerCase();
     const filtered = normalizedQuery
       ? clubs.filter((club) => {
           const searchableFields = [
