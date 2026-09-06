@@ -184,6 +184,7 @@ export default function ClubListingsPage({
   onClubClick,
 }: ClubListingsPageProps) {
   const [clubs, setClubs] = useState<Club[]>([]);
+  const [submittedQuery, setSubmittedQuery] = useState(filters.query);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [sortMode, setSortMode] = useState<SortMode>("rating-desc");
@@ -202,12 +203,24 @@ export default function ClubListingsPage({
     let active = true;
 
     async function loadClubs() {
-      const { data, error } = await supabase
+      const searchTerm = submittedQuery
+        .trim()
+        .replace(/[^a-zA-Z0-9\s_-]/g, " ")
+        .replace(/\s+/g, " ");
+      let query = supabase
         .schema("public")
         .from("clubs")
         .select("id, name, description, image, club_statistics, tags, contact_links")
         .eq("approved", true)
         .order("created_at", { ascending: false });
+
+      if (searchTerm) {
+        query = query.or(
+          `name.ilike.*${searchTerm}*,description.ilike.*${searchTerm}*,tags.cs.{${searchTerm}},club_statistics->>commitment_level.ilike.*${searchTerm}*`,
+        );
+      }
+
+      const { data, error } = await query;
 
       if (!active) return;
       if (error) {
@@ -220,17 +233,24 @@ export default function ClubListingsPage({
 
     loadClubs();
     return () => { active = false; };
-  }, []);
+  }, [submittedQuery]);
 
   const visibleClubs = useMemo(() => {
-    const normalizedQuery = filters.query.trim().toLowerCase();
+    const normalizedQuery = submittedQuery.trim().toLowerCase();
     const filtered = normalizedQuery
-      ? clubs.filter((club) =>
-          [club.name, club.category, club.description, COMMITMENT[club.commitment].label, ...club.tags]
-            .join(" ")
-            .toLowerCase()
-            .includes(normalizedQuery),
-        )
+      ? clubs.filter((club) => {
+          const searchableFields = [
+            club.name,
+            club.description,
+            ...club.tags,
+            club.commitment,
+            COMMITMENT[club.commitment].label,
+          ];
+
+          return searchableFields.some((field) =>
+            field.toLowerCase().includes(normalizedQuery),
+          );
+        })
       : [...clubs];
 
     const commitmentFiltered = filters.commitment === "all"
@@ -251,7 +271,7 @@ export default function ClubListingsPage({
       if (sortMode === "commitment-desc") return COMMITMENT[b.commitment].rank - COMMITMENT[a.commitment].rank;
       return COMMITMENT[a.commitment].rank - COMMITMENT[b.commitment].rank;
     });
-  }, [clubs, filters, sortMode]);
+  }, [clubs, filters, sortMode, submittedQuery]);
 
   const selectedSortLabel = SORT_OPTIONS.find((option) => option.value === sortMode)?.label;
 
@@ -264,11 +284,17 @@ export default function ClubListingsPage({
       <div className="clubs-title-row">
         <h1>Popular across Cal Poly</h1>
         <p className="clubs-count" aria-live="polite">
-          {loading ? "Loading clubs…" : `${visibleClubs.length} ${visibleClubs.length === 1 ? "club" : "clubs"}${filters.query ? " found" : ""}`}
+          {loading ? "Loading clubs…" : `${visibleClubs.length} ${visibleClubs.length === 1 ? "club" : "clubs"}${submittedQuery ? " found" : ""}`}
         </p>
       </div>
 
-      <div className="clubs-toolbar">
+      <form
+        className="clubs-toolbar"
+        onSubmit={(event) => {
+          event.preventDefault();
+          setSubmittedQuery(filters.query);
+        }}
+      >
         <label className="clubs-search">
           <span className="sr-only">Search clubs</span>
           <input
@@ -278,6 +304,11 @@ export default function ClubListingsPage({
             onChange={(event) =>
               onFiltersChange({ ...filters, query: event.target.value })
             }
+            onBlur={() => {
+              if (filters.query !== submittedQuery) {
+                setSubmittedQuery(filters.query);
+              }
+            }}
             placeholder="Search by club, interest, or keyword…"
           />
         </label>
@@ -314,7 +345,7 @@ export default function ClubListingsPage({
             </div>
           )}
         </div>
-      </div>
+      </form>
 
       {loading ? (
         <div className="clubs-empty"><h2>Loading clubs…</h2></div>
