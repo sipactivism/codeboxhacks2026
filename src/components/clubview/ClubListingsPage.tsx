@@ -161,7 +161,7 @@ function ClubCard({ club, onSelect }: { club: Club; onSelect: (club: Club) => vo
               <span className="commitment-dot" aria-hidden="true" />
               {commitment.label}
             </span>
-            {club.tags.map((tag) => <span className="club-tag" key={tag}>{tag}</span>)}
+            {club.tags.map((tag) => {if (!tag.includes("#")) return (<span className="club-tag" key={tag}>{tag}</span>); return null; })}
             {club.majors.length > 0 && (
               <button
                 className="club-major-toggle"
