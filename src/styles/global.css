@@ -44,6 +44,18 @@ body {
   transition: background-color 180ms ease, color 180ms ease;
 }
 
+/* Hide the grey browser scrollbar without disabling page scrolling. */
+html,
+body {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  display: none;
+}
+
 button,
 input,
 textarea,
