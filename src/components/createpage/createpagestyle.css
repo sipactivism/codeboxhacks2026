@@ -8,7 +8,7 @@ nav { height: 76px; padding: 0 max(36px, calc((100vw - 1180px) / 2)); display: f
 .navlinks { display: flex; align-items: center; gap: 26px; font-size: 14px; font-weight: 600; }
 .navlinks a { color: #4c554e; }
 .avatar { width: 35px; height: 35px; border: 0; border-radius: 50%; background: #e5b07d; color: #53291e; font-size: 12px; font-weight: 700; }
-.page-head { max-width: 1130px; margin: 0 auto; padding: 36px 24px 26px; }
+.page-head { max-width: 1130px; margin: 0 auto; padding: 0px 24px 30px; }
 .eyebrow { margin: 30px 0 8px; color: #7a7d5d; font: 500 11px 'DM Mono'; letter-spacing: .14em; }
 h1 { margin: 0; font-family: inherit; font-size: 42px; font-weight: 700; letter-spacing: -.055em; }
 .subtitle { margin: 8px 0 0; color: #687068; font-size: 16px; }
