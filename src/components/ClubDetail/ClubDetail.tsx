@@ -44,17 +44,44 @@ type Review = {
 };
 
 const commitmentOptions = [
-  { value: 1, label: "No commitment", detail: "Drop in whenever you want", tone: "none" },
-  { value: 2, label: "Low commitment", detail: "Events every once in a while", tone: "low" },
-  { value: 3, label: "Moderate commitment", detail: "A few hours each week", tone: "moderate" },
-  { value: 4, label: "High commitment", detail: "3–5 hours each week", tone: "high" },
-  { value: 5, label: "Serious commitment", detail: "6+ hours each week", tone: "serious" },
+  {
+    value: 1,
+    label: "No commitment",
+    detail: "Drop in whenever you want",
+    tone: "none",
+  },
+  {
+    value: 2,
+    label: "Low commitment",
+    detail: "Events every once in a while",
+    tone: "low",
+  },
+  {
+    value: 3,
+    label: "Moderate commitment",
+    detail: "A few hours each week",
+    tone: "moderate",
+  },
+  {
+    value: 4,
+    label: "High commitment",
+    detail: "3–5 hours each week",
+    tone: "high",
+  },
+  {
+    value: 5,
+    label: "Serious commitment",
+    detail: "6+ hours each week",
+    tone: "serious",
+  },
 ] as const;
 
 const commitmentLabel = (value: number | null) =>
-  commitmentOptions.find((option) => option.value === value)?.label ?? "Unknown commitment";
+  commitmentOptions.find((option) => option.value === value)?.label ??
+  "Unknown commitment";
 
-const commitmentTone = (average: number) => commitmentOptions[Math.max(0, Math.min(4, Math.round(average) - 1))].tone;
+const commitmentTone = (average: number) =>
+  commitmentOptions[Math.max(0, Math.min(4, Math.round(average) - 1))].tone;
 
 export function ClubDetail({ club }: ClubDetailProps) {
   const [reviewOpen, setReviewOpen] = useState(false);
@@ -66,25 +93,44 @@ export function ClubDetail({ club }: ClubDetailProps) {
   const [newReview, setNewReview] = useState(false);
   const [isPostingReview, setIsPostingReview] = useState(false);
   const clubName = club?.name ?? "Cal Poly Robotics";
-  const clubDescription = club?.description ?? "A hands-on community for students who want to design, build, and compete with robots together.";
+  const clubDescription =
+    club?.description ??
+    "A hands-on community for students who want to design, build, and compete with robots together.";
   const clubTags = club?.tags ?? ["Engineering", "Robotics", "Build teams"];
-  const clubInitials = club?.initials ?? clubName.split(/\s+/).map((word) => word[0]).join("").slice(0, 4);
+  const clubInitials =
+    club?.initials ??
+    clubName
+      .split(/\s+/)
+      .map((word) => word[0])
+      .join("")
+      .slice(0, 4);
   const commitmentLevel = club?.commitment ?? "moderate";
   const commitmentInfo = commitmentDetails[commitmentLevel];
   const contactLinks = club?.contactLinks ?? [];
-  const communityRating = reviewList.length > 0
-    ? reviewList.reduce((total, review) => total + review.rating, 0) / reviewList.length
-    : undefined;
-  const communityRatingLabel = communityRating === undefined
-    ? "No enjoyment rating yet"
-    : `${communityRating.toFixed(1)} out of 4 stars`;
+  const communityRating =
+    reviewList.length > 0
+      ? reviewList.reduce((total, review) => total + review.rating, 0) /
+        reviewList.length
+      : undefined;
+  const communityRatingLabel =
+    communityRating === undefined
+      ? "No enjoyment rating yet"
+      : `${communityRating.toFixed(1)} out of 4 stars`;
   const validCommitments = reviewList
     .map((review) => review.commitment)
-    .filter((value): value is number => value !== null && Number.isInteger(value) && value >= 1 && value <= 5);
-  const communityCommitment = validCommitments.length > 0
-    ? validCommitments.reduce((total, value) => total + value, 0) / validCommitments.length
-    : undefined;
-  const communityCommitmentLevel = communityCommitment === undefined ? undefined : commitmentTone(communityCommitment);
+    .filter(
+      (value): value is number =>
+        value !== null && Number.isInteger(value) && value >= 1 && value <= 5,
+    );
+  const communityCommitment =
+    validCommitments.length > 0
+      ? validCommitments.reduce((total, value) => total + value, 0) /
+        validCommitments.length
+      : undefined;
+  const communityCommitmentLevel =
+    communityCommitment === undefined
+      ? undefined
+      : commitmentTone(communityCommitment);
   const parsedClubId = Number(club?.id);
   const clubId = Number.isInteger(parsedClubId) ? parsedClubId : null;
 
@@ -108,19 +154,26 @@ export function ClubDetail({ club }: ClubDetailProps) {
         setReviewError("Reviews could not be loaded right now.");
         return;
       }
-      setReviewList((data ?? []).flatMap((row) => {
-        const rating = storedRatingToStars(row.rating);
-        const reviewCommitment = Number(row.commitment);
-        if (rating === null) return [];
-        const commitmentValue = Number.isInteger(reviewCommitment) && reviewCommitment >= 1 && reviewCommitment <= 5
-          ? reviewCommitment
-          : null;
-        return [{ ...row, rating, commitment: commitmentValue } as Review];
-      }));
+      setReviewList(
+        (data ?? []).flatMap((row) => {
+          const rating = storedRatingToStars(row.rating);
+          const reviewCommitment = Number(row.commitment);
+          if (rating === null) return [];
+          const commitmentValue =
+            Number.isInteger(reviewCommitment) &&
+            reviewCommitment >= 1 &&
+            reviewCommitment <= 5
+              ? reviewCommitment
+              : null;
+          return [{ ...row, rating, commitment: commitmentValue } as Review];
+        }),
+      );
     }
 
     void loadReviews();
-    return () => { active = false; };
+    return () => {
+      active = false;
+    };
   }, [clubId]);
 
   function closeReviewDialog() {
@@ -137,7 +190,7 @@ export function ClubDetail({ club }: ClubDetailProps) {
   }
 
   async function addReview() {
-    const note = comment.trim();
+    let note = comment.trim();
 
     if (newReview || isPostingReview) return;
     if (clubId === null) {
@@ -150,7 +203,7 @@ export function ClubDetail({ club }: ClubDetailProps) {
     }
 
     if (!note) {
-      setReviewError("Write a short note before posting your review.");
+      if (note) note = "-";
       return;
     }
 
@@ -191,7 +244,10 @@ export function ClubDetail({ club }: ClubDetailProps) {
       setReviewError("The submitted rating was invalid.");
       return;
     }
-    setReviewList((previousReviews) => [{ ...data, rating: returnedRating, commitment } as Review, ...previousReviews]);
+    setReviewList((previousReviews) => [
+      { ...data, rating: returnedRating, commitment } as Review,
+      ...previousReviews,
+    ]);
     closeReviewDialog();
   }
 
@@ -201,7 +257,10 @@ export function ClubDetail({ club }: ClubDetailProps) {
         <section className="club-detail__hero" aria-labelledby="club-title">
           <div className="club-detail__mark">
             {club?.logoUrl ? (
-              <img src={club.logoUrl} alt={club.logoAlt ?? `${clubName} logo`} />
+              <img
+                src={club.logoUrl}
+                alt={club.logoAlt ?? `${clubName} logo`}
+              />
             ) : (
               <span aria-hidden="true">{clubInitials}</span>
             )}
@@ -209,7 +268,9 @@ export function ClubDetail({ club }: ClubDetailProps) {
           <div className="club-detail__headline">
             <h1 id="club-title">{clubName}</h1>
             <div className="club-detail__tags" aria-label="Club tags">
-              {clubTags.map((tag) => <span key={tag}>{tag}</span>)}
+              {clubTags.map((tag) => (
+                <span key={tag}>{tag}</span>
+              ))}
             </div>
           </div>
           <button
@@ -264,12 +325,21 @@ export function ClubDetail({ club }: ClubDetailProps) {
                 </span>
               </div>
               <div className="club-detail__commitment-summary">
-                <span className={`club-detail__commitment-dot club-detail__commitment-dot--${commitmentLevel}`} aria-hidden="true" />
-                <div><b>{commitmentInfo.label}</b><p>{commitmentInfo.detail}</p></div>
+                <span
+                  className={`club-detail__commitment-dot club-detail__commitment-dot--${commitmentLevel}`}
+                  aria-hidden="true"
+                />
+                <div>
+                  <b>{commitmentInfo.label}</b>
+                  <p>{commitmentInfo.detail}</p>
+                </div>
               </div>
             </section>
 
-            <section className="detail-card club-detail__community" aria-label="Community details">
+            <section
+              className="detail-card club-detail__community"
+              aria-label="Community details"
+            >
               <div className="detail-card__title">
                 <h2>Community details</h2>
                 <span
@@ -285,56 +355,111 @@ export function ClubDetail({ club }: ClubDetailProps) {
                 <div className="club-detail__community-metric">
                   <b>Enjoyment</b>
                   <div className="club-detail__rating-value">
-                    <RatingStars value={communityRating ?? 0} label={communityRatingLabel} className="club-detail__community-rating" />
-                    <span>{communityRating === undefined ? "Not rated yet" : `${communityRating.toFixed(1)} / 4`}</span>
+                    <RatingStars
+                      value={communityRating ?? 0}
+                      label={communityRatingLabel}
+                      className="club-detail__community-rating"
+                    />
+                    <span>
+                      {communityRating === undefined
+                        ? "Not rated yet"
+                        : `${communityRating.toFixed(1)} / 4`}
+                    </span>
                   </div>
                 </div>
                 <div className="club-detail__community-metric">
                   <b>Commitment</b>
-                  {communityCommitment !== undefined && communityCommitmentLevel ? (
-                    <div className="club-detail__community-commitment" aria-label={`Average community commitment: ${communityCommitment.toFixed(1)} out of 5, ${commitmentLabel(Math.round(communityCommitment))}`}>
-                      <span className={`club-detail__commitment-dot club-detail__commitment-dot--${communityCommitmentLevel}`} aria-hidden="true" />
-                      <span>{communityCommitment.toFixed(1)} / 5 · {commitmentLabel(Math.round(communityCommitment))}</span>
+                  {communityCommitment !== undefined &&
+                  communityCommitmentLevel ? (
+                    <div
+                      className="club-detail__community-commitment"
+                      aria-label={`Average community commitment: ${communityCommitment.toFixed(1)} out of 5, ${commitmentLabel(Math.round(communityCommitment))}`}
+                    >
+                      <span
+                        className={`club-detail__commitment-dot club-detail__commitment-dot--${communityCommitmentLevel}`}
+                        aria-hidden="true"
+                      />
+                      <span>
+                        {commitmentLabel(Math.round(communityCommitment))}
+                      </span>
                     </div>
-                  ) : <span className="club-detail__community-commitment">No community commitment yet</span>}
+                  ) : (
+                    <span className="club-detail__community-commitment">
+                      No community commitment yet
+                    </span>
+                  )}
                 </div>
               </div>
             </section>
-
           </div>
 
           <section className="detail-card club-detail__comments">
             <div className="detail-card__heading">
-              <div><h2>Reviews</h2></div>
+              <div>
+                <h2>Reviews</h2>
+              </div>
               <MessageCircle size={21} aria-hidden="true" />
             </div>
             {reviewList.length === 0 ? (
-              <p className="club-detail__no-reviews">No reviews yet. Be the first to share your experience.</p>
-            ) : reviewList.map((review, index) => (
-              <article className="club-detail__comment" key={review.id}>
-                <span className={`club-detail__avatar${index % 2 ? " club-detail__avatar--gold" : ""}`} aria-hidden="true"><CircleUserRound size={21} /></span>
-                <div>
-                  <div className="club-detail__review-meta">
-                    <b>{review.name?.trim() || "Anonymous"}</b>
-                    <span>{commitmentLabel(review.commitment)}</span>
-                    <RatingStars value={review.rating} size={16} label={`${review.rating} out of 4 stars`} className="club-detail__review-rating" />
-                    <time dateTime={review.created_at}>{new Date(review.created_at).toLocaleDateString(undefined, { month: "long", day: "numeric", year: "numeric" })}</time>
+              <p className="club-detail__no-reviews">
+                No reviews yet. Be the first to share your experience.
+              </p>
+            ) : (
+              reviewList.map((review, index) => (
+                <article className="club-detail__comment" key={review.id}>
+                  <span
+                    className={`club-detail__avatar${index % 2 ? " club-detail__avatar--gold" : ""}`}
+                    aria-hidden="true"
+                  >
+                    <CircleUserRound size={21} />
+                  </span>
+                  <div>
+                    <div className="club-detail__review-meta">
+                      <b>{review.name?.trim() || "Anonymous"}</b>
+                      <span>{commitmentLabel(review.commitment)}</span>
+                      <RatingStars
+                        value={review.rating}
+                        size={16}
+                        label={`${review.rating} out of 4 stars`}
+                        className="club-detail__review-rating"
+                      />
+                      <time dateTime={review.created_at}>
+                        {new Date(review.created_at).toLocaleDateString(
+                          undefined,
+                          { month: "long", day: "numeric", year: "numeric" },
+                        )}
+                      </time>
+                    </div>
+                    {review.review && <p>{review.review}</p>}
                   </div>
-                  {review.review && <p>{review.review}</p>}
-                </div>
-              </article>
-            ))}
+                </article>
+              ))
+            )}
           </section>
         </div>
       </div>
 
       {reviewOpen && (
-        <div className="review-dialog-backdrop" role="presentation" onMouseDown={closeReviewDialog}>
-          <section className="review-dialog" role="dialog" aria-modal="true" aria-labelledby="review-title" onMouseDown={(event) => event.stopPropagation()}>
+        <div
+          className="review-dialog-backdrop"
+          role="presentation"
+          onMouseDown={closeReviewDialog}
+        >
+          <section
+            className="review-dialog"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="review-title"
+            onMouseDown={(event) => event.stopPropagation()}
+          >
             <h2 id="review-title">Review {clubName}</h2>
             <fieldset className="review-dialog__commitment">
-              <legend>Weekly commitment <b>{commitmentLabel(commitment)}</b></legend>
-              <div className="review-dialog__commitment-options" role="radiogroup" aria-label="Weekly commitment">
+              <legend>Weekly commitment<br/></legend>
+              <div
+                className="review-dialog__commitment-options"
+                role="radiogroup"
+                aria-label="Weekly commitment"
+              >
                 {commitmentOptions.map((option) => (
                   <button
                     key={option.value}
@@ -345,16 +470,53 @@ export function ClubDetail({ club }: ClubDetailProps) {
                     disabled={isPostingReview}
                     onClick={() => setCommitment(option.value)}
                   >
-                    <span className="review-dialog__commitment-dot" aria-hidden="true" />
+                    <span
+                      className="review-dialog__commitment-dot"
+                      aria-hidden="true"
+                    />
                     <span>{option.label}</span>
                   </button>
                 ))}
               </div>
             </fieldset>
-            <fieldset><legend>How much did you enjoy it?</legend><RatingStars value={enjoyment} size={28} onChange={setEnjoyment} label="Enjoyment rating" disabled={isPostingReview} className="review-dialog__stars" /></fieldset>
-            <label>Leave a note<textarea value={comment} disabled={isPostingReview} onChange={(event) => setComment(event.target.value)} placeholder="What should other students know?" /></label>
+            <fieldset>
+              <legend>How much did you enjoy it?</legend>
+              <RatingStars
+                value={enjoyment}
+                size={28}
+                onChange={setEnjoyment}
+                label="Enjoyment rating"
+                disabled={isPostingReview}
+                className="review-dialog__stars"
+              />
+            </fieldset>
+            <label>
+              Leave a note
+              <textarea
+                value={comment}
+                disabled={isPostingReview}
+                onChange={(event) => setComment(event.target.value)}
+                placeholder="What should other students know?"
+              />
+            </label>
             {reviewError && <p role="alert">{reviewError}</p>}
-            <div className="review-dialog__actions"><button type="button" disabled={isPostingReview} onClick={closeReviewDialog}>Cancel</button><button type="button" className="review-dialog__submit" disabled={isPostingReview} onClick={() => void addReview()}>{isPostingReview ? "Posting…" : "Post review"}</button></div>
+            <div className="review-dialog__actions">
+              <button
+                type="button"
+                disabled={isPostingReview}
+                onClick={closeReviewDialog}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="review-dialog__submit"
+                disabled={isPostingReview}
+                onClick={() => void addReview()}
+              >
+                {isPostingReview ? "Posting…" : "Post review"}
+              </button>
+            </div>
           </section>
         </div>
       )}
