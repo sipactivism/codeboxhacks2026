@@ -323,7 +323,7 @@ export default function ClubListingsPage({
     <main className="clubs-page">
       <div className="clubs-eyebrow hover-mouse" onClick={() => {pageContext.setPageNum(1)}}>Back home</div>
       <div className="clubs-title-row">
-        <h1>Popular across Cal Poly</h1>
+        <h1 className="clubratelogocolors">Club<span style={{ color: "var(--cal-poly-gold)" }}>Rate</span></h1>
         <p className="clubs-count" aria-live="polite">
           {loading ? "Loading clubs…" : `${visibleClubs.length} ${visibleClubs.length === 1 ? "club" : "clubs"}${submittedQuery ? " found" : ""}`}
         </p>
